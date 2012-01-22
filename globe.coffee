@@ -24,10 +24,6 @@ window.globe = create: ->
   defaultPointGeometry = new THREE.CubeGeometry 0.75, 0.75, 1
   defaultPointGeometry.vertices.forEach (v) -> v.position.z += 0.5
 
-  mouse = null
-  mouseDown = null
-  targetDown = null
-
   distance = 100000
   distanceTarget = 1000
 
@@ -35,7 +31,7 @@ window.globe = create: ->
     x: 0
     y: 0
 
-  target =
+  rotationTarget =
     x: Math.PI * 3/2
     y: Math.PI / 6.0
 
@@ -53,7 +49,7 @@ window.globe = create: ->
     camera = new THREE.PerspectiveCamera 30, width / height, 1, 10000
     camera.position.z = distance
 
-    # TODO dont' hardcode path
+    # TODO don't hardcode path
     earthTexture = THREE.ImageUtils.loadTexture 'world.jpg', null, callback
 
     scene = new THREE.Scene
@@ -62,6 +58,10 @@ window.globe = create: ->
     scene.add camera
 
     points = new THREE.Geometry
+    # making the geometry dynamic is necessary to have three.js update custom
+    # attributes on the mesh created from the geometry. weird. this changed at
+    # some point after https://github.com/mrdoob/three.js/issues/267 when
+    # dynamic was set on the mesh
     points.dynamic = true
 
     pointAttributes =
@@ -150,6 +150,9 @@ window.globe = create: ->
     )
 
   observeMouse = ->
+    mouseDown = null
+    rotationTargetDown = null
+
     $domElement = $(renderer.domElement)
     $domElement.bind 'mousewheel', (e) ->
       moveZoomTarget(e.originalEvent.wheelDeltaY * 0.3)
@@ -167,10 +170,10 @@ window.globe = create: ->
         mouse = x: -e.clientX, y: e.clientY
         zoomDamp = distance / 1000
 
-        target.x = targetDown.x + (mouse.x - mouseDown.x) * 0.005 * zoomDamp
-        target.y = targetDown.y + (mouse.y - mouseDown.y) * 0.005 * zoomDamp
+        rotationTarget.x = targetDown.x + (mouse.x - mouseDown.x) * 0.005 * zoomDamp
+        rotationTarget.y = targetDown.y + (mouse.y - mouseDown.y) * 0.005 * zoomDamp
 
-        target.y = Math.max MIN_ROTATE_Y, Math.min(MAX_ROTATE_Y, target.y)
+        rotationTarget.y = Math.max MIN_ROTATE_Y, Math.min(MAX_ROTATE_Y, rotationTarget.y)
 
       $domElement.bind 'mouseup', (e) ->
         removeMouseMoveEventListeners()
@@ -180,7 +183,7 @@ window.globe = create: ->
         removeMouseMoveEventListeners()
 
       mouseDown = x: -e.clientX, y: e.clientY
-      targetDown = x: target.x, y: target.y
+      targetDown = x: rotationTarget.x, y: rotationTarget.y
 
       $domElement.css 'cursor', 'move'
 
@@ -188,8 +191,8 @@ window.globe = create: ->
     window.requestAnimationFrame animate, renderer.domElement
 
   updatePosition = ->
-    rotation.x += (target.x - rotation.x) * ROTATE_RATE
-    rotation.y += (target.y - rotation.y) * ROTATE_RATE
+    rotation.x += (rotationTarget.x - rotation.x) * ROTATE_RATE
+    rotation.y += (rotationTarget.y - rotation.y) * ROTATE_RATE
     distance += (distanceTarget - distance) * DISTANCE_RATE
 
   animate = (t) ->
@@ -215,7 +218,7 @@ window.globe = create: ->
     distance = distanceTarget = zoom
 
   rotate = (x, y) ->
-    rotation = target = {x, y}
+    rotation = rotationTarget = {x, y}
 
   {init, initAnimation, observeMouse, zoom, moveZoomTarget, rotate, createPoint, addPoints}
 
