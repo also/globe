@@ -18,11 +18,6 @@ window.globe = create: ->
   renderer = null
   scene = null
   earthTexture = null
-  points = null
-  pointAttributes = null
-  defaultPointColor = new THREE.Color
-  defaultPointGeometry = new THREE.CubeGeometry 0.75, 0.75, 1
-  defaultPointGeometry.vertices.forEach (v) -> v.position.z += 0.5
 
   distance = 100000
   distanceTarget = 1000
@@ -56,24 +51,6 @@ window.globe = create: ->
     scene.add createEarth()
     scene.add createAtmosphere()
     scene.add camera
-
-    points = new THREE.Geometry
-    # making the geometry dynamic is necessary to have three.js update custom
-    # attributes on the mesh created from the geometry. weird. this changed at
-    # some point after https://github.com/mrdoob/three.js/issues/267 when
-    # dynamic was set on the mesh
-    points.dynamic = true
-
-    pointAttributes =
-      size:
-        type: 'f'
-        value: []
-      customPosition:
-        type: 'v3'
-        value: []
-      customColor:
-        type: 'c'
-        value: []
 
     renderer.clear()
 
@@ -113,45 +90,72 @@ window.globe = create: ->
     mesh.updateMatrix()
     mesh
 
-  createPoint = (lat, lng, geometry=defaultPointGeometry) ->
-    phi = (90 - lat) * Math.PI / 180
-    theta = (180 - lng) * Math.PI / 180
+  createPointMesh = (opts={}) ->
+    defaultPointColor = new THREE.Color
+    defaultPointGeometry = new THREE.CubeGeometry 0.75, 0.75, 1
+    defaultPointGeometry.vertices.forEach (v) -> v.position.z += 0.5
 
-    pos = new THREE.Vector3
-    pos.x = SIZE * Math.sin(phi) * Math.cos(theta)
-    pos.y = SIZE * Math.cos(phi)
-    pos.z = SIZE * Math.sin(phi) * Math.sin(theta)
+    geometry = new THREE.Geometry
+    # making the geometry dynamic is necessary to have three.js update custom
+    # attributes on the mesh created from the geometry. weird. this changed at
+    # some point after https://github.com/mrdoob/three.js/issues/267 when
+    # dynamic was set on the mesh
+    geometry.dynamic = true
 
-    vertexOffset = points.vertices.length
-    vertexCount = geometry.vertices.length
-
-    pointAttributes.customPosition.value[i] = pos for i in [vertexOffset..vertexOffset + vertexCount]
-    pointAttributes.customPosition.needsUpdate = true
-
-    setSize = (size) ->
-      pointAttributes.size.value[i] = size for i in [vertexOffset..vertexOffset + vertexCount]
-      pointAttributes.size.needsUpdate = true
-
-    setColor = (color) ->
-      pointAttributes.customColor.value[i] = color for i in [vertexOffset..vertexOffset + vertexCount]
-      pointAttributes.customColor.needsUpdate = true
-
-    setColor defaultPointColor
-
-    THREE.GeometryUtils.merge points, geometry
-
-    {setSize, setColor}
-
-  addPoints = (opts={}) ->
-    vertexShader = shaders.point.vertexShader
+    attributes =
+      size:
+        type: 'f'
+        value: []
+      customPosition:
+        type: 'v3'
+        value: []
     if opts.customColor
-      vertexShader = "#define USE_CUSTOM_COLOR;\n" + vertexShader
+      attributes.customColor =
+        type: 'c'
+        value: []
 
-    scene.add new THREE.Mesh points, new THREE.ShaderMaterial(
-      attributes: pointAttributes
-      vertexShader: vertexShader
-      fragmentShader: shaders.point.fragmentShader
-    )
+    createPoint = (lat, lng, pointGeometry=defaultPointGeometry) ->
+      phi = (90 - lat) * Math.PI / 180
+      theta = (180 - lng) * Math.PI / 180
+
+      pos = new THREE.Vector3
+      pos.x = SIZE * Math.sin(phi) * Math.cos(theta)
+      pos.y = SIZE * Math.cos(phi)
+      pos.z = SIZE * Math.sin(phi) * Math.sin(theta)
+
+      vertexOffset = geometry.vertices.length
+      vertexCount = pointGeometry.vertices.length
+
+      attributes.customPosition.value[i] = pos for i in [vertexOffset..vertexOffset + vertexCount]
+      attributes.customPosition.needsUpdate = true
+
+      setSize = (size) ->
+        attributes.size.value[i] = size for i in [vertexOffset..vertexOffset + vertexCount]
+        attributes.size.needsUpdate = true
+
+      setColor = (color) ->
+        attributes.customColor.value[i] = color for i in [vertexOffset..vertexOffset + vertexCount]
+        attributes.customColor.needsUpdate = true
+
+      if opts.customColor
+        setColor defaultPointColor
+
+      THREE.GeometryUtils.merge geometry, pointGeometry
+
+      {setSize, setColor}
+
+    add = ->
+      vertexShader = shaders.point.vertexShader
+      if opts.customColor
+        vertexShader = "#define USE_CUSTOM_COLOR;\n" + vertexShader
+
+      scene.add new THREE.Mesh geometry, new THREE.ShaderMaterial(
+        attributes: attributes
+        vertexShader: vertexShader
+        fragmentShader: shaders.point.fragmentShader
+      )
+
+    {createPoint, add}
 
   observeMouse = ->
     mouseDown = null
@@ -224,7 +228,7 @@ window.globe = create: ->
   rotate = (x, y) ->
     rotation = rotationTarget = {x, y}
 
-  {init, initAnimation, observeMouse, zoom, moveZoomTarget, rotate, createPoint, addPoints}
+  {init, initAnimation, observeMouse, zoom, moveZoomTarget, rotate, createPointMesh}
 
 shaders =
   earth:
