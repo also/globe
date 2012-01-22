@@ -142,10 +142,14 @@ window.globe = create: ->
 
     {setSize, setColor}
 
-  addPoints = ->
+  addPoints = (opts={}) ->
+    vertexShader = shaders.point.vertexShader
+    if opts.customColor
+      vertexShader = "#define USE_CUSTOM_COLOR;\n" + vertexShader
+
     scene.add new THREE.Mesh points, new THREE.ShaderMaterial(
       attributes: pointAttributes
-      vertexShader: shaders.point.vertexShader
+      vertexShader: vertexShader
       fragmentShader: shaders.point.fragmentShader
     )
 
@@ -270,7 +274,65 @@ shaders =
       varying vec4 f_color;
       attribute float size;
       attribute vec3 customPosition;
-      attribute vec3 customColor;
+
+      #ifdef USE_CUSTOM_COLOR
+        attribute vec3 customColor;
+      #endif
+
+      // found, randomly, at https://www.h3dapi.org:8090/MedX3D/trunk/MedX3D/src/shaders/StyleFunctions.glsl
+      vec3 HSVtoRGB(float h, float s, float v ) {
+        int i;
+        float f, p, q, t;
+        vec3 res;
+
+        if (s == 0.0) {
+          // achromatic (grey)
+          res.x = v;
+          res.y = v;
+          res.z = v;
+          return res;
+        }
+
+        h /= 60.0;         // sector 0 to 5
+        i = int(floor(h));
+        f = h - float(i);         // factorial part of h
+        p = v * (1.0 - s);
+        q = v * (1.0 - s * f);
+        t = v * (1.0 - s * (1.0 - f));
+
+        if (i == 0) {
+          res.x = v;
+          res.y = t;
+          res.z = p;
+        }
+        else if (i == 1) {
+          res.x = q;
+          res.y = v;
+          res.z = p;
+        }
+        else if (i == 2) {
+          res.x = p;
+          res.y = v;
+          res.z = t;
+        }
+        else if (i == 3) {
+          res.x = p;
+          res.y = q;
+          res.z = v;
+        }
+        else if (i == 4) {
+          res.x = t;
+          res.y = p;
+          res.z = v;
+        }
+        else {      // case 5:
+          res.x = v;
+          res.y = p;
+          res.z = q;
+        }
+
+        return res;
+      }
 
       void main() {
         // look at the origin
@@ -295,7 +357,13 @@ shaders =
                       modelViewMatrix *
                       customMat *
                       vec4(position.x, position.y, position.z,1);
-        f_color = vec4(customColor, 1.0);
+
+        #ifdef USE_CUSTOM_COLOR
+          f_color = vec4(customColor, 1.0);
+        #endif
+        #ifndef USE_CUSTOM_COLOR
+          f_color = vec4(HSVtoRGB((0.6 - size * 0.5) * 360.0, 1.0, 1.0), 1.0);
+        #endif
       }
     """
     fragmentShader: """
