@@ -102,6 +102,7 @@ window.globe = create: ->
     # dynamic was set on the mesh
     geometry.dynamic = true
 
+    uniforms = {}
     attributes =
       size:
         type: 'f'
@@ -109,10 +110,19 @@ window.globe = create: ->
       customPosition:
         type: 'v3'
         value: []
+
     if opts.customColor
       attributes.customColor =
         type: 'c'
         value: []
+
+    if opts.sizeTarget
+      attributes.sizeTarget =
+        type: 'f'
+        value: []
+      uniforms.sizeTargetMix =
+        type: 'f'
+        value: 0
 
     createPoint = (lat, lng, pointGeometry=defaultPointGeometry) ->
       phi = (90 - lat) * Math.PI / 180
@@ -133,6 +143,10 @@ window.globe = create: ->
         attributes.size.value[i] = size for i in [vertexOffset..vertexOffset + vertexCount]
         attributes.size.needsUpdate = true
 
+      setSizeTarget = (sizeTarget) ->
+        attributes.sizeTarget.value[i] = sizeTarget for i in [vertexOffset..vertexOffset + vertexCount]
+        attributes.sizeTarget.needsUpdate = true
+
       setColor = (color) ->
         attributes.customColor.value[i] = color for i in [vertexOffset..vertexOffset + vertexCount]
         attributes.customColor.needsUpdate = true
@@ -142,20 +156,26 @@ window.globe = create: ->
 
       THREE.GeometryUtils.merge geometry, pointGeometry
 
-      {setSize, setColor}
+      {setSize, setSizeTarget, setColor}
+
+    setSizeTargetMix = (mix) ->
+      uniforms.sizeTargetMix.value = mix
 
     add = ->
       vertexShader = shaders.point.vertexShader
       if opts.customColor
         vertexShader = "#define USE_CUSTOM_COLOR;\n" + vertexShader
+      if opts.sizeTarget
+        vertexShader = "#define USE_SIZE_TARGET;\n" + vertexShader
 
       scene.add new THREE.Mesh geometry, new THREE.ShaderMaterial(
+        uniforms: uniforms
         attributes: attributes
         vertexShader: vertexShader
         fragmentShader: shaders.point.fragmentShader
       )
 
-    {createPoint, add}
+    {createPoint, add, setSizeTargetMix}
 
   observeMouse = ->
     mouseDown = null
@@ -279,6 +299,11 @@ shaders =
       attribute float size;
       attribute vec3 customPosition;
 
+      #ifdef USE_SIZE_TARGET
+        attribute float sizeTarget;
+        uniform float sizeTargetMix;
+      #endif
+
       #ifdef USE_CUSTOM_COLOR
         attribute vec3 customColor;
       #endif
@@ -339,6 +364,10 @@ shaders =
       }
 
       void main() {
+        float mixedSize = size;
+        #ifdef USE_SIZE_TARGET
+          mixedSize = mix(size, sizeTarget, sizeTargetMix);
+        #endif
         // look at the origin
         vec3 lz = normalize(-customPosition);
         if (length(lz) == 0.0) {
@@ -352,7 +381,7 @@ shaders =
         }
         vec3 ly = normalize(cross(lz, lx));
 
-        lz *= -size * #{SIZE.toFixed(1)};
+        lz *= -mixedSize * #{SIZE.toFixed(1)};
         mat4 customMat = mat4(lx, 0,
                          ly, 0,
                          lz, 0,
@@ -366,7 +395,7 @@ shaders =
           f_color = vec4(customColor, 1.0);
         #endif
         #ifndef USE_CUSTOM_COLOR
-          f_color = vec4(HSVtoRGB((0.6 - size * 0.5) * 360.0, 1.0, 1.0), 1.0);
+          f_color = vec4(HSVtoRGB((0.6 - mixedSize * 0.5) * 360.0, 1.0, 1.0), 1.0);
         #endif
       }
     """
