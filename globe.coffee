@@ -271,28 +271,23 @@ shaders =
       attribute float size;
       attribute vec3 customPosition;
       attribute vec3 customColor;
-      mat4 customMat;
-      vec3 lx;
-      vec3 ly;
-      vec3 lz;
-      vec3 lup;
 
       void main() {
         // look at the origin
-        lz = normalize(-customPosition);
+        vec3 lz = normalize(-customPosition);
         if (length(lz) == 0.0) {
           lz.z = 1.0;
         }
-        lup = vec3(0,1,0);
-        lx = normalize(cross(lup, lz));
+        vec3 lup = vec3(0,1,0);
+        vec3 lx = normalize(cross(lup, lz));
         if (length(lx) == 0.0) {
           lz.x = lx.x + 0.0001;
           lx = normalize(cross(lup, lz));
         }
-        ly = normalize(cross(lz, lx));
+        vec3 ly = normalize(cross(lz, lx));
 
         lz *= -size * #{SIZE.toFixed(1)};
-        customMat = mat4(lx, 0,
+        mat4 customMat = mat4(lx, 0,
                          ly, 0,
                          lz, 0,
                          customPosition,1);
