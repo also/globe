@@ -30,10 +30,11 @@ window.globe = create: ->
     x: Math.PI * 3/2
     y: Math.PI / 6.0
 
-  init = (callback) ->
+  init = (opts={}) ->
     # FIXME
-    width = 800
-    height = 600
+    width = opts.width ? 800
+    height = opts.height ? 600
+    globeTexture = opts.globeTexture ? 'world.jpg'
 
     renderer = new THREE.WebGLRenderer antialias: true
     renderer.setSize width, height
@@ -44,8 +45,7 @@ window.globe = create: ->
     camera = new THREE.PerspectiveCamera 30, width / height, 1, 10000
     camera.position.z = distance
 
-    # TODO don't hardcode path
-    earthTexture = THREE.ImageUtils.loadTexture 'world.jpg', null, callback
+    earthTexture = THREE.ImageUtils.loadTexture globeTexture, null, opts.onLoad
 
     scene = new THREE.Scene
     scene.add createEarth()
@@ -126,6 +126,11 @@ window.globe = create: ->
         value: 0
 
     createPoint = (lat, lng, pointGeometry=defaultPointGeometry) ->
+      vertexOffset = geometry.vertices.length
+      vertexCount = pointGeometry.vertices.length
+
+      THREE.GeometryUtils.merge geometry, pointGeometry
+
       phi = (90 - lat) * Math.PI / 180
       theta = (180 - lng) * Math.PI / 180
 
@@ -133,9 +138,6 @@ window.globe = create: ->
       pos.x = SIZE * Math.sin(phi) * Math.cos(theta)
       pos.y = SIZE * Math.cos(phi)
       pos.z = SIZE * Math.sin(phi) * Math.sin(theta)
-
-      vertexOffset = geometry.vertices.length
-      vertexCount = pointGeometry.vertices.length
 
       attributes.customPosition.value[i] = pos for i in [vertexOffset...vertexOffset + vertexCount]
       attributes.customPosition.needsUpdate = true
@@ -149,19 +151,22 @@ window.globe = create: ->
         attributes.sizeTarget.needsUpdate = true
 
       mix = (sizeTargetMix) ->
-        size = @size ? 0
-        @setSize size + ((@sizeTarget ? 0) - size) * sizeTargetMix
+        @setSize @size + (@sizeTarget - @size) * sizeTargetMix
 
       setColor = (color) ->
         attributes.customColor.value[i] = color for i in [vertexOffset...vertexOffset + vertexCount]
         attributes.customColor.needsUpdate = true
 
-      if opts.customColor
-        setColor defaultPointColor
-
-      THREE.GeometryUtils.merge geometry, pointGeometry
-
       p = {setSize, setSizeTarget, mix, setColor}
+
+      # firefox likes it better if we explicitly set the size the first time.
+      # chrome doesn't seem to care
+      p.setSize 0
+      if opts.sizeTarget
+        p.setSizeTarget 0
+      if opts.customColor
+        p.setColor defaultPointColor
+
       points.push(p)
       p
 
