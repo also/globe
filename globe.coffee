@@ -91,6 +91,7 @@ window.globe = create: ->
     mesh
 
   createPointMesh = (opts={}) ->
+    points = []
     defaultPointColor = new THREE.Color
     defaultPointGeometry = new THREE.CubeGeometry 0.75, 0.75, 1
     defaultPointGeometry.vertices.forEach (v) -> v.position.z += 0.5
@@ -139,13 +140,17 @@ window.globe = create: ->
       attributes.customPosition.value[i] = pos for i in [vertexOffset..vertexOffset + vertexCount]
       attributes.customPosition.needsUpdate = true
 
-      setSize = (size) ->
+      setSize = (@size) ->
         attributes.size.value[i] = size for i in [vertexOffset..vertexOffset + vertexCount]
         attributes.size.needsUpdate = true
 
-      setSizeTarget = (sizeTarget) ->
+      setSizeTarget = (@sizeTarget) ->
         attributes.sizeTarget.value[i] = sizeTarget for i in [vertexOffset..vertexOffset + vertexCount]
         attributes.sizeTarget.needsUpdate = true
+
+      mix = (sizeTargetMix) ->
+        size = @size ? 0
+        @setSize size + (@sizeTarget - size) * sizeTargetMix
 
       setColor = (color) ->
         attributes.customColor.value[i] = color for i in [vertexOffset..vertexOffset + vertexCount]
@@ -156,10 +161,16 @@ window.globe = create: ->
 
       THREE.GeometryUtils.merge geometry, pointGeometry
 
-      {setSize, setSizeTarget, setColor}
+      p = {setSize, setSizeTarget, mix, setColor}
+      points.push(p)
+      p
 
-    setSizeTargetMix = (mix) ->
-      uniforms.sizeTargetMix.value = mix
+    setSizeTargetMix = (@sizeTargetMix) ->
+      uniforms.sizeTargetMix.value = sizeTargetMix
+
+    mix = (sizeTargetMix=@sizeTargetMix) ->
+      p.mix @sizeTargetMix for p in points
+      @setSizeTargetMix 0
 
     add = ->
       vertexShader = shaders.point.vertexShader
@@ -175,7 +186,7 @@ window.globe = create: ->
         fragmentShader: shaders.point.fragmentShader
       )
 
-    {createPoint, add, setSizeTargetMix}
+    {createPoint, add, setSizeTargetMix, mix}
 
   observeMouse = ->
     mouseDown = null
