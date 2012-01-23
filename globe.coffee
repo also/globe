@@ -31,7 +31,6 @@ window.globe = create: ->
     y: Math.PI / 6.0
 
   init = (opts={}) ->
-    # FIXME
     width = opts.width ? 800
     height = opts.height ? 600
     globeTexture = opts.globeTexture ? 'world.jpg'
@@ -93,7 +92,8 @@ window.globe = create: ->
   createPointMesh = (opts={}) ->
     points = []
     defaultPointColor = new THREE.Color
-    defaultPointGeometry = new THREE.CubeGeometry 0.75, 0.75, 1
+    opts.defaultDimension ?= 0.75
+    defaultPointGeometry = new THREE.CubeGeometry opts.defaultDimension, opts.defaultDimension, 1
     defaultPointGeometry.vertices.forEach (v) -> v.position.z += 0.5
 
     geometry = new THREE.Geometry
