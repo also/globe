@@ -170,11 +170,11 @@ window.globe = create: ->
       points.push(p)
       p
 
-    setSizes = (sizes) ->
-      points[i].setSize s for s, i in sizes
+    setSizes = (sizes, m=1) ->
+      points[i].setSize s * m for s, i in sizes
 
-    setSizeTargets = (sizeTargets) ->
-      points[i].setSizeTarget t for t, i in sizeTargets
+    setSizeTargets = (sizeTargets, m=1) ->
+      points[i].setSizeTarget t * m for t, i in sizeTargets
 
     setSizeTargetMix = (@sizeTargetMix) ->
       uniforms.sizeTargetMix.value = sizeTargetMix
