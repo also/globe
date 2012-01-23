@@ -310,57 +310,21 @@ shaders =
 
       // found, randomly, at https://www.h3dapi.org:8090/MedX3D/trunk/MedX3D/src/shaders/StyleFunctions.glsl
       vec3 HSVtoRGB(float h, float s, float v ) {
-        int i;
-        float f, p, q, t;
-        vec3 res;
+        if (s == 0.0) return vec3(v);
 
-        if (s == 0.0) {
-          // achromatic (grey)
-          res.x = v;
-          res.y = v;
-          res.z = v;
-          return res;
-        }
+        h /= 60.0;
+        int i = int(floor(h));
+        float f = h - float(i);
+        float p = v * (1.0 - s);
+        float q = v * (1.0 - s * f);
+        float t = v * (1.0 - s * (1.0 - f));
 
-        h /= 60.0;         // sector 0 to 5
-        i = int(floor(h));
-        f = h - float(i);         // factorial part of h
-        p = v * (1.0 - s);
-        q = v * (1.0 - s * f);
-        t = v * (1.0 - s * (1.0 - f));
-
-        if (i == 0) {
-          res.x = v;
-          res.y = t;
-          res.z = p;
-        }
-        else if (i == 1) {
-          res.x = q;
-          res.y = v;
-          res.z = p;
-        }
-        else if (i == 2) {
-          res.x = p;
-          res.y = v;
-          res.z = t;
-        }
-        else if (i == 3) {
-          res.x = p;
-          res.y = q;
-          res.z = v;
-        }
-        else if (i == 4) {
-          res.x = t;
-          res.y = p;
-          res.z = v;
-        }
-        else {      // case 5:
-          res.x = v;
-          res.y = p;
-          res.z = q;
-        }
-
-        return res;
+        if (i == 0) return vec3(v,t,p);
+        if (i == 1) return vec3(q,v,p);
+        if (i == 2) return vec3(p,v,t);
+        if (i == 3) return vec3(p,q,v);
+        if (i == 4) return vec3(t,p,v);
+                    return vec3(v,p,q);
       }
 
       void main() {
