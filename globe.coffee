@@ -165,6 +165,12 @@ window.globe = create: ->
       points.push(p)
       p
 
+    setSizes = (sizes) ->
+      points[i].setSize s for s, i in sizes
+
+    setSizeTargets = (sizeTargets) ->
+      points[i].setSizeTarget t for t, i in sizeTargets
+
     setSizeTargetMix = (@sizeTargetMix) ->
       uniforms.sizeTargetMix.value = sizeTargetMix
 
@@ -186,7 +192,7 @@ window.globe = create: ->
         fragmentShader: shaders.point.fragmentShader
       )
 
-    {createPoint, add, setSizeTargetMix, mix}
+    {points, createPoint, add, setSizes, setSizeTargets, setSizeTargetMix, mix}
 
   observeMouse = ->
     mouseDown = null
