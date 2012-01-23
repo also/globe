@@ -137,15 +137,15 @@ window.globe = create: ->
       vertexOffset = geometry.vertices.length
       vertexCount = pointGeometry.vertices.length
 
-      attributes.customPosition.value[i] = pos for i in [vertexOffset..vertexOffset + vertexCount]
+      attributes.customPosition.value[i] = pos for i in [vertexOffset...vertexOffset + vertexCount]
       attributes.customPosition.needsUpdate = true
 
       setSize = (@size) ->
-        attributes.size.value[i] = size for i in [vertexOffset..vertexOffset + vertexCount]
+        attributes.size.value[i] = size for i in [vertexOffset...vertexOffset + vertexCount]
         attributes.size.needsUpdate = true
 
       setSizeTarget = (@sizeTarget) ->
-        attributes.sizeTarget.value[i] = sizeTarget for i in [vertexOffset..vertexOffset + vertexCount]
+        attributes.sizeTarget.value[i] = sizeTarget for i in [vertexOffset...vertexOffset + vertexCount]
         attributes.sizeTarget.needsUpdate = true
 
       mix = (sizeTargetMix) ->
@@ -153,7 +153,7 @@ window.globe = create: ->
         @setSize size + ((@sizeTarget ? 0) - size) * sizeTargetMix
 
       setColor = (color) ->
-        attributes.customColor.value[i] = color for i in [vertexOffset..vertexOffset + vertexCount]
+        attributes.customColor.value[i] = color for i in [vertexOffset...vertexOffset + vertexCount]
         attributes.customColor.needsUpdate = true
 
       if opts.customColor
