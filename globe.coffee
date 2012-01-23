@@ -150,7 +150,7 @@ window.globe = create: ->
 
       mix = (sizeTargetMix) ->
         size = @size ? 0
-        @setSize size + (@sizeTarget - size) * sizeTargetMix
+        @setSize size + ((@sizeTarget ? 0) - size) * sizeTargetMix
 
       setColor = (color) ->
         attributes.customColor.value[i] = color for i in [vertexOffset..vertexOffset + vertexCount]
@@ -168,8 +168,8 @@ window.globe = create: ->
     setSizeTargetMix = (@sizeTargetMix) ->
       uniforms.sizeTargetMix.value = sizeTargetMix
 
-    mix = (sizeTargetMix=@sizeTargetMix) ->
-      p.mix @sizeTargetMix for p in points
+    mix = (sizeTargetMix=@sizeTargetMix ? 0) ->
+      p.mix sizeTargetMix for p in points
       @setSizeTargetMix 0
 
     add = ->
