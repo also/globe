@@ -34,12 +34,13 @@ window.globe = create: ->
     width = opts.width ? 800
     height = opts.height ? 600
     globeTexture = opts.globeTexture ? 'world.jpg'
+    backgroundColor = opts.backgroundColor ? 0x000000
 
     renderer = new THREE.WebGLRenderer antialias: true
     renderer.setSize width, height
     document.body.appendChild renderer.domElement
     renderer.autoClear = false
-    renderer.setClearColorHex 0x000000, 1.0
+    renderer.setClearColorHex backgroundColor, 1.0
 
     camera = new THREE.PerspectiveCamera 30, width / height, 1, 10000
     camera.position.z = distance
