@@ -54,6 +54,11 @@ window.globe = create: ->
 
     renderer.clear()
 
+  resize = (width, height) ->
+    renderer.setSize width, height
+    camera.aspect = width / height
+    camera.updateProjectionMatrix()
+
   createEarth = ->
     shader = shaders.earth
     uniforms = THREE.UniformsUtils.clone(shader.uniforms)
@@ -279,7 +284,7 @@ window.globe = create: ->
   setRotationTarget = (x, y) ->
     rotationTarget = {x, y}
 
-  {init, initAnimation, render, observeMouse, setZoom, setZoomTarget, moveZoomTarget, setRotation, setRotationTarget, createPointMesh}
+  {init, initAnimation, resize, render, observeMouse, setZoom, setZoomTarget, moveZoomTarget, setRotation, setRotationTarget, createPointMesh}
 
 shaders =
   earth:
