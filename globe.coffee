@@ -265,13 +265,19 @@ window.globe = create: ->
     distanceTarget -= amount
     distanceTarget = Math.max Math.min(distanceTarget, MAX_DISTANCE), MIN_DISTANCE
 
-  zoom = (zoom) ->
+  setZoomTarget = (zoom) ->
+    distanceTarget = zoom
+
+  setZoom = (zoom) ->
     distance = distanceTarget = zoom
 
-  rotate = (x, y) ->
+  setRotation = (x, y) ->
     rotation = rotationTarget = {x, y}
 
-  {init, initAnimation, observeMouse, zoom, moveZoomTarget, rotate, createPointMesh}
+  setRotationTarget = (x, y) ->
+    rotationTarget = {x, y}
+
+  {init, initAnimation, observeMouse, setZoom, setZoomTarget, moveZoomTarget, setRotation, setRotationTarget, createPointMesh}
 
 shaders =
   earth:
