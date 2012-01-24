@@ -36,7 +36,7 @@ window.globe = create: ->
     globeTexture = opts.globeTexture ? 'world.jpg'
     backgroundColor = opts.backgroundColor ? 0x000000
 
-    renderer = new THREE.WebGLRenderer antialias: true
+    renderer = new THREE.WebGLRenderer antialias: true, preserveDrawingBuffer: opts.preserveDrawingBuffer
     renderer.setSize width, height
     document.body.appendChild renderer.domElement
     renderer.autoClear = false
