@@ -246,8 +246,6 @@ window.globe = create: ->
     rotation.y += (rotationTarget.y - rotation.y) * ROTATE_RATE
     distance += (distanceTarget - distance) * DISTANCE_RATE
 
-  animate = (t) ->
-    updatePosition()
     camera.position.x = distance * Math.sin(rotation.x) * Math.cos(rotation.y)
     camera.position.y = distance * Math.sin(rotation.y)
     camera.position.z = distance * Math.cos(rotation.x) * Math.cos(rotation.y)
@@ -255,10 +253,14 @@ window.globe = create: ->
     # you need to update lookAt every frame
     camera.lookAt scene.position
 
+  render = ->
+    updatePosition()
     renderer.clear()
 
     renderer.render scene, camera
 
+  animate = (t) ->
+    render()
     initAnimation()
 
   moveZoomTarget = (amount) ->
@@ -277,7 +279,7 @@ window.globe = create: ->
   setRotationTarget = (x, y) ->
     rotationTarget = {x, y}
 
-  {init, initAnimation, observeMouse, setZoom, setZoomTarget, moveZoomTarget, setRotation, setRotationTarget, createPointMesh}
+  {init, initAnimation, render, observeMouse, setZoom, setZoomTarget, moveZoomTarget, setRotation, setRotationTarget, createPointMesh}
 
 shaders =
   earth:
