@@ -38,7 +38,8 @@ window.globe = create: ->
 
     renderer = new THREE.WebGLRenderer antialias: true, preserveDrawingBuffer: opts.preserveDrawingBuffer
     renderer.setSize width, height
-    document.body.appendChild renderer.domElement
+    opts.container?.appendChild renderer.domElement
+    @domElement = renderer.domElement
     renderer.autoClear = false
     renderer.setClearColorHex backgroundColor, 1.0
 
