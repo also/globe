@@ -6,12 +6,31 @@ DISTANCE_RATE = 0.3
 MIN_DISTANCE = 350
 MAX_DISTANCE = 1000
 
-MAX_CUBE_SIZE = SIZE
-
 MAX_ROTATE_Y = Math.PI / 2
 MIN_ROTATE_Y = -MAX_ROTATE_Y
 
 ORIGIN = new THREE.Vector3 0, 0, 0
+
+llToXyz = (lng, lat, size=SIZE) ->
+  phi = (90 - lat) * Math.PI / 180
+  theta = (180 - lng) * Math.PI / 180
+
+  pos = new THREE.Vector3
+  pos.x = size * Math.sin(phi) * Math.cos(theta)
+  pos.y = size * Math.cos(phi)
+  pos.z = size * Math.sin(phi) * Math.sin(theta)
+
+  pos
+
+slerp = (p0, p1, t) ->
+  omega = Math.acos(p0.clone().normalize().dot(p1.clone().normalize()))
+  sinOmega = Math.sin omega
+  fn = (t) ->
+    _p0 = p0.clone()
+    _p1 = p1.clone()
+    _p0.multiplyScalar((Math.sin((1 - t) * omega) / sinOmega)).addSelf(_p1.multiplyScalar(Math.sin(t * omega) / sinOmega))
+    _p0
+  if t? then fn t else fn
 
 window.globe = create: ->
   camera = null
@@ -50,7 +69,9 @@ window.globe = create: ->
 
     scene = new THREE.Scene
     scene.add createEarth()
+    # TODO make configurable. atmosphere doesn't always play nice with the point cloud
     scene.add createAtmosphere()
+
     scene.add camera
 
     renderer.clear()
@@ -96,6 +117,67 @@ window.globe = create: ->
     mesh.updateMatrix()
     mesh
 
+  createParticles = (opts) ->
+    opts.groupCount ?= 1
+
+    totalParticleCount = opts.groupCount * opts.particleCount
+    geometry = new THREE.Geometry
+    material = new THREE.ParticleBasicMaterial
+      color: 0xe21759
+      size: 2
+      blending: THREE.AdditiveBlending
+      transparent: true
+
+    # TODO implement groups
+    groups = for g in [0...opts.groupCount]
+      for i in [0...opts.particleCount]
+        v = new THREE.Vertex
+        do (v) ->
+          position = new THREE.Vector3
+          normalizedPosition = new THREE.Vector3
+          altitude = 0
+          origin = destination = null
+          slerpP = null
+
+          p =
+            altitude: 0
+            setPosition: (lng, lat) ->
+              normalizedPosition.copy llToXyz lng, lat, 1
+              @setAltitude altitude
+            setOrigin: (lng, lat) ->
+              origin = llToXyz lng, lat, 1
+              updateSlerp()
+            setDestination: (lng, lat) ->
+              destination = llToXyz lng, lat, 1
+              updateSlerp()
+            setPositionMix: (t) ->
+              normalizedPosition = slerpP t
+              @setAltitude altitude
+            setAltitude: (altitude) ->
+              position.copy(normalizedPosition).multiplyScalar SIZE * (1 + altitude)
+              v.position = position
+              geometry.__dirtyVertices = true
+
+          updateSlerp = ->
+            if origin? and destination?
+              slerpP = slerp origin, destination
+              p.distance = Math.acos(origin.clone().dot(destination)) / Math.PI
+
+          p.setPosition 0, 0
+
+          geometry.vertices.push(v)
+          p
+
+    add = ->
+      ps = new THREE.ParticleSystem(
+        geometry,
+        material,
+      )
+      ps.sortParticles = true
+      scene.add ps
+
+    {add, groups}
+
   createPointMesh = (opts={}) ->
     points = []
     defaultPointColor = new THREE.Color
@@ -138,13 +220,7 @@ window.globe = create: ->
 
       THREE.GeometryUtils.merge geometry, pointGeometry
 
-      phi = (90 - lat) * Math.PI / 180
-      theta = (180 - lng) * Math.PI / 180
-
-      pos = new THREE.Vector3
-      pos.x = SIZE * Math.sin(phi) * Math.cos(theta)
-      pos.y = SIZE * Math.cos(phi)
-      pos.z = SIZE * Math.sin(phi) * Math.sin(theta)
+      pos = llToXyz(lng, lat)
 
       attributes.customPosition.value[i] = pos for i in [vertexOffset...vertexOffset + vertexCount]
       attributes.customPosition.needsUpdate = true
@@ -285,7 +361,20 @@ window.globe = create: ->
   setRotationTarget = (x, y) ->
     rotationTarget = {x, y}
 
-  {init, initAnimation, resize, render, observeMouse, setZoom, setZoomTarget, moveZoomTarget, setRotation, setRotationTarget, createPointMesh}
+  {
+    init,
+    initAnimation,
+    resize,
+    render,
+    observeMouse,
+    setZoom,
+    setZoomTarget,
+    moveZoomTarget,
+    setRotation,
+    setRotationTarget
+    createPointMesh,
+    createParticles
+  }
 
 shaders =
   earth:
