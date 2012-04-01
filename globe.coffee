@@ -356,7 +356,8 @@ window.globe = create: ->
     distance = distanceTarget = zoom
 
   setRotation = (x, y) ->
-    rotation = rotationTarget = {x, y}
+    rotation = {x, y}
+    rotationTarget = {x, y}
 
   setRotationTarget = (x, y) ->
     rotationTarget = {x, y}
