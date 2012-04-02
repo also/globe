@@ -169,7 +169,7 @@ window.globe = create: ->
             position.copy(normalizedPosition).multiplyScalar SIZE * (1 + altitude)
             v.position = position
             geometry.__dirtyVertices = true
-          hide: -> @setPosition 0, 0
+          hide: -> @setAltitude -1
 
         updateSlerp = ->
           if origin? and destination?
