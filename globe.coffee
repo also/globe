@@ -69,8 +69,8 @@ window.globe = create: ->
 
     scene = new THREE.Scene
     scene.add createEarth()
-    # TODO make configurable. atmosphere doesn't always play nice with the point cloud
-    scene.add createAtmosphere()
+    if opts.atmosphere ? true
+      scene.add createAtmosphere()
 
     scene.add camera
 
