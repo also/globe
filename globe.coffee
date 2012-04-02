@@ -122,9 +122,12 @@ window.globe = create: ->
 
     totalParticleCount = opts.groupCount * opts.particleCount
     geometry = new THREE.Geometry
-    material = new THREE.ParticleBasicMaterial
+    shader = shaders.particle
+    material = new THREE.ShaderMaterial
       color: opts.color ? 0xe21759
       size: opts.size ? 5
+      vertexShader: shader.vertexShader
+      fragmentShader: shader.fragmentShader
 
     # TODO implement groups
     groups = for g in [0...opts.groupCount]
@@ -492,5 +495,18 @@ shaders =
       varying vec4 f_color;
       void main() {
         gl_FragColor = f_color;
+      }
+    """
+  particle:
+    vertexShader: """
+      void main() {
+        vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+        gl_Position = projectionMatrix * mvPosition;
+        gl_PointSize = 10.0;
+      }
+    """
+    fragmentShader: """
+      void main() {
+        gl_FragColor = vec4( 1,1,1, 0.5 );
       }
     """
