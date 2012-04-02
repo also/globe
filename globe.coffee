@@ -123,10 +123,8 @@ window.globe = create: ->
     totalParticleCount = opts.groupCount * opts.particleCount
     geometry = new THREE.Geometry
     material = new THREE.ParticleBasicMaterial
-      color: 0xe21759
-      size: 2
-      blending: THREE.AdditiveBlending
-      transparent: true
+      color: opts.color ? 0xe21759
+      size: opts.size ? 5
 
     # TODO implement groups
     groups = for g in [0...opts.groupCount]
