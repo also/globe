@@ -120,54 +120,61 @@ window.globe = create: ->
   createParticles = (opts) ->
     opts.groupCount ?= 1
 
-    totalParticleCount = opts.groupCount * opts.particleCount
     geometry = new THREE.Geometry
     shader = shaders.particle
+    attributes =
+      size:
+        type: 'f'
+        value: []
     material = new THREE.ShaderMaterial
       color: opts.color ? 0xe21759
       size: opts.size ? 5
       vertexShader: shader.vertexShader
       fragmentShader: shader.fragmentShader
+      attributes: attributes
 
-    # TODO implement groups
-    groups = for g in [0...opts.groupCount]
-      for i in [0...opts.particleCount]
-        v = new THREE.Vertex
-        do (v) ->
-          position = new THREE.Vector3
-          normalizedPosition = new THREE.Vector3
-          altitude = 0
-          origin = destination = null
-          slerpP = null
+    particles = for i in [0...opts.particleCount]
+      v = new THREE.Vertex
+      do (v, i) ->
+        position = new THREE.Vector3
+        normalizedPosition = new THREE.Vector3
+        altitude = 0
+        origin = destination = null
+        slerpP = null
 
-          p =
-            altitude: 0
-            setPosition: (lng, lat) ->
-              normalizedPosition.copy llToXyz lng, lat, 1
-              @setAltitude altitude
-            setOrigin: (lng, lat) ->
-              origin = llToXyz lng, lat, 1
-              updateSlerp()
-            setDestination: (lng, lat) ->
-              destination = llToXyz lng, lat, 1
-              updateSlerp()
-            setPositionMix: (t) ->
-              normalizedPosition = slerpP t
-              @setAltitude altitude
-            setAltitude: (altitude) ->
-              position.copy(normalizedPosition).multiplyScalar SIZE * (1 + altitude)
-              v.position = position
-              geometry.__dirtyVertices = true
+        p =
+          altitude: 0
+          setPosition: (lng, lat) ->
+            normalizedPosition.copy llToXyz lng, lat, 1
+            @setAltitude altitude
+          setSize: (size) ->
+            attributes.size.value[i] = size
+            attributes.size.needsUpdate = true
+          setOrigin: (lng, lat) ->
+            origin = llToXyz lng, lat, 1
+            updateSlerp()
+          setDestination: (lng, lat) ->
+            destination = llToXyz lng, lat, 1
+            updateSlerp()
+          setPositionMix: (t) ->
+            normalizedPosition = slerpP t
+            @setAltitude altitude
+          setAltitude: (altitude) ->
+            position.copy(normalizedPosition).multiplyScalar SIZE * (1 + altitude)
+            v.position = position
+            geometry.__dirtyVertices = true
+          hide: -> @setPosition 0, 0
 
-          updateSlerp = ->
-            if origin? and destination?
-              slerpP = slerp origin, destination
-              p.distance = Math.acos(origin.clone().dot(destination)) / Math.PI
+        updateSlerp = ->
+          if origin? and destination?
+            slerpP = slerp origin, destination
+            p.distance = Math.acos(origin.clone().dot(destination)) / Math.PI
 
-          p.setPosition 0, 0
+        p.setPosition 0, 0
+        p.setSize 1
 
-          geometry.vertices.push(v)
-          p
+        geometry.vertices.push(v)
+        p
 
     add = ->
       ps = new THREE.ParticleSystem(
@@ -177,7 +184,7 @@ window.globe = create: ->
       ps.sortParticles = true
       scene.add ps
 
-    {add, groups}
+    {add, particles}
 
   createPointMesh = (opts={}) ->
     points = []
@@ -499,10 +506,11 @@ shaders =
     """
   particle:
     vertexShader: """
+      attribute float size;
       void main() {
         vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
         gl_Position = projectionMatrix * mvPosition;
-        gl_PointSize = 10.0;
+        gl_PointSize = size;
       }
     """
     fragmentShader: """
