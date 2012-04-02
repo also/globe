@@ -129,6 +129,9 @@ window.globe = create: ->
       particleColor:
         type: 'c'
         value: []
+      particleOpacity:
+        type: 'f'
+        value: []
 
     material = new THREE.ShaderMaterial
       transparent: true
@@ -147,6 +150,12 @@ window.globe = create: ->
 
         p =
           altitude: 0
+          reset: ->
+            @setPosition 0,0
+            @hide()
+            @setSize opts.size ? 1
+            @setColor new THREE.Color opts.color ? 0xffffff
+            @setOpacity 1
           setPosition: (lng, lat) ->
             normalizedPosition.copy llToXyz lng, lat, 1
             @setAltitude altitude
@@ -156,6 +165,9 @@ window.globe = create: ->
           setColor: (color) ->
             attributes.particleColor.value[i] = color
             attributes.particleColor.needsUpdate = true
+          setOpacity: (opacity) ->
+            attributes.particleOpacity.value[i] = opacity
+            attributes.particleOpacity.needsUpdate = true
           setOrigin: (lng, lat) ->
             origin = llToXyz lng, lat, 1
             updateSlerp()
@@ -176,10 +188,7 @@ window.globe = create: ->
             slerpP = slerp origin, destination
             p.distance = Math.acos(origin.clone().dot(destination)) / Math.PI
 
-        p.setPosition 0, 0
-        p.hide()
-        p.setSize opts.size ? 1
-        p.setColor new THREE.Color opts.color ? 0xffffff
+        p.reset()
 
         geometry.vertices.push(v)
         p
@@ -516,20 +525,24 @@ shaders =
     vertexShader: """
       attribute float size;
       attribute vec3 particleColor;
+      attribute float particleOpacity;
       varying vec4 f_color;
+      varying float f_opacity;
 
       void main() {
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         gl_PointSize = size;
-        f_color = vec4(particleColor ,1);
+        f_opacity = particleOpacity;
+        f_color = vec4(particleColor, 1);
       }
     """
     fragmentShader: """
       varying vec4 f_color;
+      varying float f_opacity;
 
       void main() {
         if (length(gl_PointCoord - 0.5) < 0.5) {
-          gl_FragColor = f_color;
+          gl_FragColor = vec4(f_color.xyz, f_opacity);
         }
         else {
           gl_FragColor = vec4(1, 1, 1, 0);
