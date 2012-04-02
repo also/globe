@@ -126,9 +126,12 @@ window.globe = create: ->
       size:
         type: 'f'
         value: []
+      particleColor:
+        type: 'c'
+        value: []
+
     material = new THREE.ShaderMaterial
-      color: opts.color ? 0xe21759
-      size: opts.size ? 5
+      transparent: true
       vertexShader: shader.vertexShader
       fragmentShader: shader.fragmentShader
       attributes: attributes
@@ -150,6 +153,9 @@ window.globe = create: ->
           setSize: (size) ->
             attributes.size.value[i] = size
             attributes.size.needsUpdate = true
+          setColor: (color) ->
+            attributes.particleColor.value[i] = color
+            attributes.particleColor.needsUpdate = true
           setOrigin: (lng, lat) ->
             origin = llToXyz lng, lat, 1
             updateSlerp()
@@ -171,7 +177,9 @@ window.globe = create: ->
             p.distance = Math.acos(origin.clone().dot(destination)) / Math.PI
 
         p.setPosition 0, 0
-        p.setSize 1
+        p.hide()
+        p.setSize opts.size ? 1
+        p.setColor new THREE.Color opts.color ? 0xffffff
 
         geometry.vertices.push(v)
         p
@@ -507,14 +515,24 @@ shaders =
   particle:
     vertexShader: """
       attribute float size;
+      attribute vec3 particleColor;
+      varying vec4 f_color;
+
       void main() {
-        vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
-        gl_Position = projectionMatrix * mvPosition;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         gl_PointSize = size;
+        f_color = vec4(particleColor ,1);
       }
     """
     fragmentShader: """
+      varying vec4 f_color;
+
       void main() {
-        gl_FragColor = vec4( 1,1,1, 0.5 );
+        if (length(gl_PointCoord - 0.5) < 0.5) {
+          gl_FragColor = f_color;
+        }
+        else {
+          gl_FragColor = vec4(1, 1, 1, 0);
+        }
       }
     """
