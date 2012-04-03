@@ -118,8 +118,6 @@ window.globe = create: ->
     mesh
 
   createParticles = (opts) ->
-    opts.groupCount ?= 1
-
     geometry = new THREE.Geometry
     shader = shaders.particle
     attributes =
