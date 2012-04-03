@@ -383,7 +383,13 @@ window.globe = create: ->
     rotationTarget = {x, y}
 
   setRotationTarget = (x, y) ->
+    x ?= rotationTarget.x
+    y ?= rotationTarget.y
     rotationTarget = {x, y}
+
+  moveRotationTarget = (x, y) ->
+    rotationTarget.x += x
+    rotationTarget.y += y
 
   {
     init,
@@ -395,7 +401,8 @@ window.globe = create: ->
     setZoomTarget,
     moveZoomTarget,
     setRotation,
-    setRotationTarget
+    setRotationTarget,
+    moveRotationTarget,
     createPointMesh,
     createParticles
   }
