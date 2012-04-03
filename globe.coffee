@@ -15,7 +15,6 @@ CIRCLE_IMAGE = (
   r = 25
   size = r * 2
   canvas = $("<canvas width='#{r*2}' height='#{r*2}'/>").get 0
-  console.log canvas
   ctx = canvas.getContext '2d'
   ctx.fillStyle = '#fff'
   ctx.beginPath()
