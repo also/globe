@@ -11,6 +11,20 @@ MIN_ROTATE_Y = -MAX_ROTATE_Y
 
 ORIGIN = new THREE.Vector3 0, 0, 0
 
+CIRCLE_IMAGE = (
+  r = 25
+  size = r * 2
+  canvas = $("<canvas width='#{r*2}' height='#{r*2}'/>").get 0
+  console.log canvas
+  ctx = canvas.getContext '2d'
+  ctx.fillStyle = '#fff'
+  ctx.beginPath()
+  ctx.arc r, r, r, 0, Math.PI * 2, true
+  ctx.closePath()
+  ctx.fill()
+  canvas
+)
+
 llToXyz = (lng, lat, size=SIZE) ->
   phi = (90 - lat) * Math.PI / 180
   theta = (180 - lng) * Math.PI / 180
@@ -118,8 +132,15 @@ window.globe = create: ->
     mesh
 
   createParticles = (opts) ->
-    geometry = new THREE.Geometry
-    shader = shaders.particle
+    texture = new THREE.Texture CIRCLE_IMAGE
+    texture.needsUpdate = true
+
+    uniforms =
+      texture:
+        type: 't'
+        value: 0
+        texture: texture
+
     attributes =
       size:
         type: 'f'
@@ -131,11 +152,16 @@ window.globe = create: ->
         type: 'f'
         value: []
 
+    shader = shaders.particle
+
     material = new THREE.ShaderMaterial
       transparent: true
       vertexShader: shader.vertexShader
       fragmentShader: shader.fragmentShader
       attributes: attributes
+      uniforms: uniforms
+
+    geometry = new THREE.Geometry
 
     particles = for i in [0...opts.particleCount]
       v = new THREE.Vertex
@@ -542,15 +568,11 @@ shaders =
       }
     """
     fragmentShader: """
+      uniform sampler2D texture;
       varying vec4 f_color;
       varying float f_opacity;
 
       void main() {
-        if (length(gl_PointCoord - 0.5) < 0.5) {
-          gl_FragColor = vec4(f_color.xyz, f_opacity);
-        }
-        else {
-          gl_FragColor = vec4(1, 1, 1, 0);
-        }
+        gl_FragColor = vec4(f_color.xyz, f_opacity) * texture2D(texture, gl_PointCoord);
       }
     """
