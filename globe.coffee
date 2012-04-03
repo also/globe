@@ -60,7 +60,7 @@ window.globe = create: ->
     opts.container?.appendChild renderer.domElement
     @domElement = renderer.domElement
     renderer.autoClear = false
-    renderer.setClearColorHex backgroundColor, 1.0
+    renderer.setClearColorHex backgroundColor, opts.backgroundOpacity ? 1
 
     camera = new THREE.PerspectiveCamera 30, width / height, 1, 10000
     camera.position.z = distance
