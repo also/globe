@@ -139,7 +139,7 @@ window.globe = create: ->
       # if you look closely, you can see clusters of stars above the poles
       lng = 180 - Math.random() * 360
       lat = 180 - Math.random() * 360
-      pos = llToXyz lng, lat, SIZE * 5 + Math.random() * SIZE * 5
+      pos = llToXyz lng, lat, SIZE * 10 + Math.random() * SIZE * 5
       v = new THREE.Vertex pos
       geometry.vertices.push v
 
