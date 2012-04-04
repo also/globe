@@ -85,6 +85,9 @@ window.globe = create: ->
     if opts.atmosphere ? true
       scene.add createAtmosphere()
 
+    if opts.stars
+      scene.add createStars()
+
     scene.add camera
 
     renderer.clear()
@@ -129,6 +132,32 @@ window.globe = create: ->
     mesh.matrixAutoUpdate = false
     mesh.updateMatrix()
     mesh
+
+  createStars = ->
+    geometry = new THREE.Geometry
+    for i in [1..800]
+      # if you look closely, you can see clusters of stars above the poles
+      lng = 180 - Math.random() * 360
+      lat = 180 - Math.random() * 360
+      pos = llToXyz lng, lat, SIZE * 5 + Math.random() * SIZE * 5
+      v = new THREE.Vertex pos
+      geometry.vertices.push v
+
+    texture = new THREE.Texture CIRCLE_IMAGE
+    texture.needsUpdate = true
+
+
+    material = new THREE.ParticleBasicMaterial
+      size: 12
+      map: texture
+      blending: THREE.AdditiveBlending
+      transparent : true
+
+    material.color.setHSV .65, .0, .5
+
+    ps = new THREE.ParticleSystem geometry, material
+    ps.updateMatrix()
+    ps
 
   createParticles = (opts) ->
     texture = new THREE.Texture CIRCLE_IMAGE
