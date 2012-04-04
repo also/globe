@@ -359,11 +359,11 @@ window.globe = create: ->
 
     {points, createPoint, add, setSizes, setSizeTargets, setSizeTargetMix, mix}
 
-  observeMouse = ->
+  observeMouse = (target=renderer.domElement)->
     mouseDown = null
     rotationTargetDown = null
 
-    $domElement = $(renderer.domElement)
+    $domElement = $(target)
     $domElement.bind 'mousewheel', (e) ->
       moveZoomTarget(e.originalEvent.wheelDeltaY * 0.3)
       e.preventDefault()
@@ -389,7 +389,7 @@ window.globe = create: ->
         removeMouseMoveEventListeners()
         $domElement.css 'cursor', ''
 
-      $domElement.bind 'mouseout', (e) ->
+      $domElement.bind 'mouseleave', (e) ->
         removeMouseMoveEventListeners()
 
       mouseDown = x: -e.clientX, y: e.clientY
