@@ -361,6 +361,7 @@ window.globe = create: ->
 
   observeMouse = (target=renderer.domElement)->
     mouseDown = null
+    targetDown = null
     rotationTargetDown = null
 
     $domElement = $(target)
@@ -368,26 +369,29 @@ window.globe = create: ->
       moveZoomTarget(e.originalEvent.wheelDeltaY * 0.3)
       e.preventDefault()
 
+    mouseup = (e) ->
+      removeMouseMoveEventListeners()
+      $domElement.css 'cursor', ''
+
+    mousemove = (e) ->
+      mouse = x: -e.clientX, y: e.clientY
+      zoomDamp = distance / 1000
+
+      rotationTarget.x = targetDown.x + (mouse.x - mouseDown.x) * 0.005 * zoomDamp
+      rotationTarget.y = targetDown.y + (mouse.y - mouseDown.y) * 0.005 * zoomDamp
+
+      rotationTarget.y = Math.max MIN_ROTATE_Y, Math.min(MAX_ROTATE_Y, rotationTarget.y)
+
     removeMouseMoveEventListeners = ->
       $domElement
         .unbind('mousemove')
-        .unbind('mouseup')
-        .unbind('mouseout')
+        .unbind('mouseup', mouseup)
 
     $domElement.bind 'mousedown', (e) ->
       e.preventDefault()
-      $domElement.bind 'mousemove', (e) ->
-        mouse = x: -e.clientX, y: e.clientY
-        zoomDamp = distance / 1000
+      $domElement.bind 'mousemove', mousemove
 
-        rotationTarget.x = targetDown.x + (mouse.x - mouseDown.x) * 0.005 * zoomDamp
-        rotationTarget.y = targetDown.y + (mouse.y - mouseDown.y) * 0.005 * zoomDamp
-
-        rotationTarget.y = Math.max MIN_ROTATE_Y, Math.min(MAX_ROTATE_Y, rotationTarget.y)
-
-      $domElement.bind 'mouseup', (e) ->
-        removeMouseMoveEventListeners()
-        $domElement.css 'cursor', ''
+      $domElement.bind 'mouseup', mouseup
 
       $domElement.bind 'mouseleave', (e) ->
         removeMouseMoveEventListeners()
