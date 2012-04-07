@@ -53,6 +53,8 @@ window.globe = create: ->
   scene = null
   earthTexture = null
   atmosphereColor = null
+  width = height = null
+  onupdate = null
 
   distance = 100000
   distanceTarget = 1000
@@ -70,6 +72,7 @@ window.globe = create: ->
     height = opts.height ? 600
     backgroundColor = opts.backgroundColor ? 0x000000
     atmosphereColor = opts.atmosphereColor ? 0xffffff
+    onupdate = opts.onupdate
 
     renderer = new THREE.WebGLRenderer antialias: true, preserveDrawingBuffer: opts.preserveDrawingBuffer
     renderer.setSize width, height
@@ -95,7 +98,9 @@ window.globe = create: ->
 
     renderer.clear()
 
-  resize = (width, height) ->
+  resize = (w, h) ->
+    width = w
+    height = h
     renderer.setSize width, height
     camera.aspect = width / height
     camera.updateProjectionMatrix()
@@ -431,7 +436,10 @@ window.globe = create: ->
     camera.position.z = distance * Math.cos(rotation.x) * Math.cos(rotation.y)
 
     # you need to update lookAt every frame
-    camera.lookAt scene.position
+
+    if updated
+      camera.lookAt scene.position
+      onupdate?()
 
   render = ->
     updatePosition()
@@ -466,6 +474,13 @@ window.globe = create: ->
     rotationTarget.x += x
     rotationTarget.y += y
 
+  worldToScreen = (lng, lat) ->
+    pos = llToXyz lng, lat
+    projector = new THREE.Projector
+    screen = projector.projectVector pos.clone(), camera
+    x: width * (screen.x + 1) / 2
+    y: height * (-screen.y + 1) / 2
+
   {
     init,
     initAnimation,
@@ -479,7 +494,8 @@ window.globe = create: ->
     setRotationTarget,
     moveRotationTarget,
     createPointMesh,
-    createParticles
+    createParticles,
+    worldToScreen
   }
 
 shaders =
