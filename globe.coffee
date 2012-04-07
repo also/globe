@@ -11,6 +11,8 @@ MIN_ROTATE_Y = -MAX_ROTATE_Y
 
 ORIGIN = new THREE.Vector3 0, 0, 0
 
+MIN_TARGET_DELTA = 0.0001
+
 CIRCLE_IMAGE = (
   r = 25
   size = r * 2
@@ -407,9 +409,22 @@ window.globe = create: ->
     window.requestAnimationFrame animate, renderer.domElement
 
   updatePosition = ->
-    rotation.x += (rotationTarget.x - rotation.x) * ROTATE_RATE
-    rotation.y += (rotationTarget.y - rotation.y) * ROTATE_RATE
-    distance += (distanceTarget - distance) * DISTANCE_RATE
+    updated = false
+    if Math.abs(rotationTarget.x - rotation.x) < MIN_TARGET_DELTA
+      rotation.x = rotationTarget.x
+    else
+      updated = true
+      rotation.x += (rotationTarget.x - rotation.x) * ROTATE_RATE
+    if Math.abs(rotationTarget.y - rotation.y) < MIN_TARGET_DELTA
+      rotation.y = rotationTarget.y
+    else
+      updated = true
+      rotation.y += (rotationTarget.y - rotation.y) * ROTATE_RATE
+    if Math.abs(distanceTarget - distance) < MIN_TARGET_DELTA
+      distance = distanceTarget
+    else
+      updated = true
+      distance += (distanceTarget - distance) * DISTANCE_RATE
 
     camera.position.x = distance * Math.sin(rotation.x) * Math.cos(rotation.y)
     camera.position.y = distance * Math.sin(rotation.y)
