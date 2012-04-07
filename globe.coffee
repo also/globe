@@ -50,6 +50,7 @@ window.globe = create: ->
   renderer = null
   scene = null
   earthTexture = null
+  atmosphereColor = null
 
   distance = 100000
   distanceTarget = 1000
@@ -65,8 +66,8 @@ window.globe = create: ->
   init = (opts={}) ->
     width = opts.width ? 800
     height = opts.height ? 600
-    globeTexture = opts.globeTexture ? 'world.jpg'
     backgroundColor = opts.backgroundColor ? 0x000000
+    atmosphereColor = opts.atmosphereColor ? 0xffffff
 
     renderer = new THREE.WebGLRenderer antialias: true, preserveDrawingBuffer: opts.preserveDrawingBuffer
     renderer.setSize width, height
@@ -78,7 +79,7 @@ window.globe = create: ->
     camera = new THREE.PerspectiveCamera 30, width / height, 1, 10000
     camera.position.z = distance
 
-    earthTexture = THREE.ImageUtils.loadTexture globeTexture, null, opts.onLoad
+    earthTexture = THREE.ImageUtils.loadTexture opts.globeTexture ? 'world.jpg', null, opts.onLoad
 
     scene = new THREE.Scene
     scene.add createEarth()
@@ -120,6 +121,7 @@ window.globe = create: ->
   createAtmosphere = ->
     shader = shaders.atmosphere
     uniforms = THREE.UniformsUtils.clone(shader.uniforms)
+    uniforms.color.value = new THREE.Color atmosphereColor
     material = new THREE.ShaderMaterial(
       uniforms: uniforms
       vertexShader: shader.vertexShader
@@ -493,7 +495,9 @@ shaders =
       }
     """
   atmosphere:
-    uniforms: {}
+    uniforms:
+      color:
+        type: 'c'
     vertexShader: """
       varying vec3 vNormal;
       void main() {
@@ -503,9 +507,10 @@ shaders =
     """
     fragmentShader: """
       varying vec3 vNormal;
+      uniform vec3 color;
       void main() {
         float intensity = pow( 0.8 - dot( vNormal, vec3( 0, 0, 1.0 ) ), 12.0 );
-        gl_FragColor = vec4( 1.0, 1.0, 1.0, 1.0 ) * intensity;
+        gl_FragColor = vec4( color, 1.0 ) * intensity;
       }
     """
   point:
