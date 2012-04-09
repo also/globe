@@ -55,7 +55,9 @@ window.globe = create: ->
   atmosphereColor = null
   width = height = null
   onupdate = null
+  cameraPositionNormalized = new THREE.Vector3
   previousTime = null
+  projector = new THREE.Projector
 
   distance = 100000
   distanceTarget = 1000
@@ -442,6 +444,7 @@ window.globe = create: ->
     # you need to update lookAt every frame
 
     if updated
+      cameraPositionNormalized.copy(camera.position).normalize()
       camera.lookAt scene.position
       onupdate?()
 
@@ -480,12 +483,17 @@ window.globe = create: ->
     rotationTarget.x += x
     rotationTarget.y += y
 
-  worldToScreen = (lng, lat) ->
+  createLocation = (lng, lat) ->
     pos = llToXyz lng, lat
-    projector = new THREE.Projector
-    screen = projector.projectVector pos.clone(), camera
-    x: width * (screen.x + 1) / 2
-    y: height * (-screen.y + 1) / 2
+    projectedPos = pos.clone()
+    posNormalized = pos.clone().normalize()
+
+    angle: -> Math.acos(posNormalized.dot cameraPositionNormalized)
+    screenPosition: ->
+      projectedPos.copy pos
+      screen = projector.projectVector projectedPos, camera
+      x: width * (screen.x + 1) / 2
+      y: height * (-screen.y + 1) / 2
 
   {
     init,
@@ -501,7 +509,7 @@ window.globe = create: ->
     moveRotationTarget,
     createPointMesh,
     createParticles,
-    worldToScreen
+    createLocation
   }
 
 shaders =
