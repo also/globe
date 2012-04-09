@@ -1,7 +1,7 @@
 SIZE = 200
 
-ROTATE_RATE = 0.1
-DISTANCE_RATE = 0.3
+ROTATE_RATE = 0.005
+DISTANCE_RATE = 0.015
 
 MIN_DISTANCE = 350
 MAX_DISTANCE = 1000
@@ -55,6 +55,7 @@ window.globe = create: ->
   atmosphereColor = null
   width = height = null
   onupdate = null
+  previousTime = null
 
   distance = 100000
   distanceTarget = 1000
@@ -411,25 +412,28 @@ window.globe = create: ->
       $domElement.css 'cursor', 'move'
 
   initAnimation = ->
+    previousTime = + new Date
     window.requestAnimationFrame animate, renderer.domElement
 
   updatePosition = ->
+    time = new Date
+    deltaT = time - previousTime
     updated = false
     if Math.abs(rotationTarget.x - rotation.x) < MIN_TARGET_DELTA
       rotation.x = rotationTarget.x
     else
       updated = true
-      rotation.x += (rotationTarget.x - rotation.x) * ROTATE_RATE
+      rotation.x += (rotationTarget.x - rotation.x) * Math.min(1, ROTATE_RATE * deltaT)
     if Math.abs(rotationTarget.y - rotation.y) < MIN_TARGET_DELTA
       rotation.y = rotationTarget.y
     else
       updated = true
-      rotation.y += (rotationTarget.y - rotation.y) * ROTATE_RATE
+      rotation.y += (rotationTarget.y - rotation.y) * Math.min(1, ROTATE_RATE * deltaT)
     if Math.abs(distanceTarget - distance) < MIN_TARGET_DELTA
       distance = distanceTarget
     else
       updated = true
-      distance += (distanceTarget - distance) * DISTANCE_RATE
+      distance += (distanceTarget - distance) * Math.min(1, DISTANCE_RATE * deltaT)
 
     camera.position.x = distance * Math.sin(rotation.x) * Math.cos(rotation.y)
     camera.position.y = distance * Math.sin(rotation.y)
@@ -440,6 +444,8 @@ window.globe = create: ->
     if updated
       camera.lookAt scene.position
       onupdate?()
+
+    previousTime = time
 
   render = ->
     updatePosition()
