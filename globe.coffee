@@ -56,6 +56,7 @@ window.globe = create: ->
   width = height = null
   onupdate = null
   cameraPositionNormalized = new THREE.Vector3
+  forceUpdate = false
   previousTime = null
   projector = new THREE.Projector
 
@@ -443,9 +444,10 @@ window.globe = create: ->
 
     # you need to update lookAt every frame
 
-    if updated
+    if updated or forceUpdate
       cameraPositionNormalized.copy(camera.position).normalize()
       camera.lookAt scene.position
+      forceUpdate = false
       onupdate?()
 
     previousTime = time
@@ -495,6 +497,9 @@ window.globe = create: ->
       x: width * (screen.x + 1) / 2
       y: height * (-screen.y + 1) / 2
 
+  updated = ->
+    forceUpdate = true
+
   {
     init,
     initAnimation,
@@ -509,6 +514,8 @@ window.globe = create: ->
     moveRotationTarget,
     createPointMesh,
     createParticles,
+    worldToScreen,
+    updated,
     createLocation
   }
 
