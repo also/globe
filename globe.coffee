@@ -514,7 +514,6 @@ window.globe = create: ->
     moveRotationTarget,
     createPointMesh,
     createParticles,
-    worldToScreen,
     updated,
     createLocation
   }
