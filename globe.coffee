@@ -13,7 +13,7 @@ ORIGIN = new THREE.Vector3 0, 0, 0
 
 MIN_TARGET_DELTA = 0.0001
 
-CIRCLE_IMAGE = (
+CIRCLE_IMAGE = do ->
   r = 25
   size = r * 2
   canvas = $("<canvas width='#{r*2}' height='#{r*2}'/>").get 0
@@ -24,7 +24,6 @@ CIRCLE_IMAGE = (
   ctx.closePath()
   ctx.fill()
   canvas
-)
 
 llToXyz = (lng, lat, size=SIZE) ->
   phi = (90 - lat) * Math.PI / 180
@@ -34,6 +33,17 @@ llToXyz = (lng, lat, size=SIZE) ->
   pos.x = size * Math.sin(phi) * Math.cos(theta)
   pos.y = size * Math.cos(phi)
   pos.z = size * Math.sin(phi) * Math.sin(theta)
+
+  pos
+
+srand = (radius=SIZE) ->
+  pos = new THREE.Vector3
+  z = Math.random() * 2 - 1
+  t = Math.random() * Math.PI * 2
+  r = Math.sqrt(1 - z * z) * radius
+  pos.z = radius * z
+  pos.x = r * Math.cos t
+  pos.y = r * Math.sin t
 
   pos
 
@@ -149,11 +159,7 @@ window.globe = create: ->
   createStars = ->
     geometry = new THREE.Geometry
     for i in [1..800]
-      # if you look closely, you can see clusters of stars above the poles
-      lng = 180 - Math.random() * 360
-      lat = 180 - Math.random() * 360
-      pos = llToXyz lng, lat, SIZE * 10 + Math.random() * SIZE * 5
-      v = new THREE.Vertex pos
+      v = new THREE.Vertex srand(SIZE * 10 + Math.random() * SIZE * 5)
       geometry.vertices.push v
 
     texture = new THREE.Texture CIRCLE_IMAGE
