@@ -179,7 +179,7 @@ window.globe = create: ->
     ps
 
   createParticles = (opts) ->
-    texture = new THREE.Texture CIRCLE_IMAGE
+    texture = new THREE.Texture opts.texture ? CIRCLE_IMAGE
     texture.needsUpdate = true
 
     uniforms =
@@ -667,6 +667,6 @@ shaders =
       varying float f_opacity;
 
       void main() {
-        gl_FragColor = vec4(f_color.xyz, f_opacity) * texture2D(texture, gl_PointCoord);
+        gl_FragColor = vec4(f_color.xyz, f_opacity) * texture2D(texture, 1.0 - gl_PointCoord);
       }
     """
