@@ -35,8 +35,7 @@
     earth = globe.create();
     earth.init({
       container: document.body,
-      atmosphereColor: 0x70A9D1,
-      globeTexture: '../../natural-earth.jpg',
+      globeTexture: '../../world.jpg',
       width: WIDTH,
       height: HEIGHT
     });
