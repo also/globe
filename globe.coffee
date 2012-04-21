@@ -310,7 +310,7 @@ window.globe = create: ->
         type: 'f'
         value: 0
 
-    createBar = (lat, lng, pointGeometry=defaultPointGeometry) ->
+    createBar = (lng, lat, pointGeometry=defaultPointGeometry) ->
       vertexOffset = geometry.vertices.length
       vertexCount = pointGeometry.vertices.length
 
