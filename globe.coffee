@@ -274,7 +274,7 @@ window.globe = create: ->
 
     {add, particles}
 
-  createPointMesh = (opts={}) ->
+  createBarChart = (opts={}) ->
     points = []
     defaultPointColor = new THREE.Color
     opts.defaultDimension ?= 0.75
@@ -310,7 +310,7 @@ window.globe = create: ->
         type: 'f'
         value: 0
 
-    createPoint = (lat, lng, pointGeometry=defaultPointGeometry) ->
+    createBar = (lat, lng, pointGeometry=defaultPointGeometry) ->
       vertexOffset = geometry.vertices.length
       vertexCount = pointGeometry.vertices.length
 
@@ -376,7 +376,7 @@ window.globe = create: ->
         fragmentShader: shaders.point.fragmentShader
       )
 
-    {points, createPoint, add, setSizes, setSizeTargets, setSizeTargetMix, mix}
+    {points, createBar, add, setSizes, setSizeTargets, setSizeTargetMix, mix}
 
   observeMouse = (target=renderer.domElement)->
     mouseDown = null
@@ -518,7 +518,7 @@ window.globe = create: ->
     setRotation,
     setRotationTarget,
     moveRotationTarget,
-    createPointMesh,
+    createBarChart,
     createParticles,
     updated,
     createLocation
