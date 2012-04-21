@@ -78,7 +78,7 @@
 
   window.globe = {
     create: function() {
-      var animate, atmosphereColor, camera, cameraPositionNormalized, createAtmosphere, createEarth, createLocation, createParticles, createPointMesh, createStars, distance, distanceTarget, earthTexture, forceUpdate, height, init, initAnimation, moveRotationTarget, moveZoomTarget, observeMouse, onupdate, previousTime, projector, render, renderer, resize, rotation, rotationTarget, scene, setRotation, setRotationTarget, setZoom, setZoomTarget, updatePosition, updated, width;
+      var animate, atmosphereColor, camera, cameraPositionNormalized, createAtmosphere, createBarChart, createEarth, createLocation, createParticles, createStars, distance, distanceTarget, earthTexture, forceUpdate, height, init, initAnimation, moveRotationTarget, moveZoomTarget, observeMouse, onupdate, previousTime, projector, render, renderer, resize, rotation, rotationTarget, scene, setRotation, setRotationTarget, setZoom, setZoomTarget, updatePosition, updated, width;
       camera = null;
       renderer = null;
       scene = null;
@@ -310,8 +310,8 @@
           particles: particles
         };
       };
-      createPointMesh = function(opts) {
-        var add, attributes, createPoint, defaultPointColor, defaultPointGeometry, geometry, mix, points, setSizeTargetMix, setSizeTargets, setSizes, uniforms, _ref;
+      createBarChart = function(opts) {
+        var add, attributes, createBar, defaultPointColor, defaultPointGeometry, geometry, mix, points, setSizeTargetMix, setSizeTargets, setSizes, uniforms, _ref;
         if (opts == null) opts = {};
         points = [];
         defaultPointColor = new THREE.Color;
@@ -349,7 +349,7 @@
             value: 0
           };
         }
-        createPoint = function(lat, lng, pointGeometry) {
+        createBar = function(lng, lat, pointGeometry) {
           var i, mix, p, pos, setColor, setSize, setSizeTarget, vertexCount, vertexOffset, _ref2;
           if (pointGeometry == null) pointGeometry = defaultPointGeometry;
           vertexOffset = geometry.vertices.length;
@@ -451,7 +451,7 @@
         };
         return {
           points: points,
-          createPoint: createPoint,
+          createBar: createBar,
           add: add,
           setSizes: setSizes,
           setSizeTargets: setSizeTargets,
@@ -620,7 +620,7 @@
         setRotation: setRotation,
         setRotationTarget: setRotationTarget,
         moveRotationTarget: moveRotationTarget,
-        createPointMesh: createPointMesh,
+        createBarChart: createBarChart,
         createParticles: createParticles,
         updated: updated,
         createLocation: createLocation
