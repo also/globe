@@ -14,9 +14,9 @@ ORIGIN = new THREE.Vector3 0, 0, 0
 MIN_TARGET_DELTA = 0.0001
 
 CIRCLE_IMAGE = do ->
-  r = 25
-  size = r * 2
-  canvas = $("<canvas width='#{r*2}' height='#{r*2}'/>").get 0
+  size = 64
+  r = size / 2
+  canvas = $("<canvas width='#{size}' height='#{size}'/>").get 0
   ctx = canvas.getContext '2d'
   ctx.fillStyle = '#fff'
   ctx.beginPath()
