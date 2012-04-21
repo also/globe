@@ -78,11 +78,10 @@
 
   window.globe = {
     create: function() {
-      var animate, atmosphereColor, camera, cameraPositionNormalized, createAtmosphere, createEarth, createLocation, createParticles, createPointMesh, createStars, distance, distanceTarget, earthTexture, forceUpdate, height, init, initAnimation, moveRotationTarget, moveZoomTarget, observeMouse, onupdate, previousTime, projector, render, renderer, resize, rotation, rotationTarget, scene, sceneAtmosphere, setRotation, setRotationTarget, setZoom, setZoomTarget, updatePosition, updated, width;
+      var animate, atmosphereColor, camera, cameraPositionNormalized, createAtmosphere, createEarth, createLocation, createParticles, createPointMesh, createStars, distance, distanceTarget, earthTexture, forceUpdate, height, init, initAnimation, moveRotationTarget, moveZoomTarget, observeMouse, onupdate, previousTime, projector, render, renderer, resize, rotation, rotationTarget, scene, setRotation, setRotationTarget, setZoom, setZoomTarget, updatePosition, updated, width;
       camera = null;
       renderer = null;
       scene = null;
-      sceneAtmosphere = null;
       earthTexture = null;
       atmosphereColor = null;
       width = height = null;
@@ -122,14 +121,13 @@
         renderer.setClearColorHex(backgroundColor, (_ref6 = opts.backgroundOpacity) != null ? _ref6 : 1);
         camera = new THREE.PerspectiveCamera(30, width / height, 1, 10000);
         camera.position.z = distance;
-        earthTexture = THREE.ImageUtils.loadTexture((_ref7 = opts.globeTexture) != null ? _ref7 : 'natural-earth.jpg', null, opts.onLoad);
+        earthTexture = THREE.ImageUtils.loadTexture((_ref7 = opts.globeTexture) != null ? _ref7 : 'world.jpg', null, opts.onLoad);
         scene = new THREE.Scene;
-        sceneAtmosphere = new THREE.Scene;
         scene.add(createEarth());
-        if ((_ref8 = true || opts.atmosphere) != null ? _ref8 : true) {
-          sceneAtmosphere.add(createAtmosphere());
+        if ((_ref8 = opts.atmosphere) != null ? _ref8 : true) {
+          scene.add(createAtmosphere());
         }
-        if (opts.stars || true) scene.add(createStars());
+        if (opts.stars) scene.add(createStars());
         scene.add(camera);
         return renderer.clear();
       };
@@ -549,8 +547,7 @@
       render = function() {
         updatePosition();
         renderer.clear();
-        renderer.render(scene, camera);
-        return renderer.render(sceneAtmosphere, camera);
+        return renderer.render(scene, camera);
       };
       animate = function(t) {
         render();
