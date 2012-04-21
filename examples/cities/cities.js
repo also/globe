@@ -31,7 +31,7 @@
     earth.init({
       container: document.body,
       atmosphereColor: 0x70A9D1,
-      globeTexture: '../../../ne.png',
+      globeTexture: '../../natural-earth.jpg',
       onupdate: cities.onupdate,
       width: WIDTH,
       height: HEIGHT
