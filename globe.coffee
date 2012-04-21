@@ -150,7 +150,7 @@ window.globe = create: ->
     )
     geometry = new THREE.SphereGeometry SIZE, 40, 30
     mesh = new THREE.Mesh geometry, material
-    mesh.scale.set 1.1, 1.1, 1.1
+    mesh.scale.set 1.4, 1.4, 1.4
     mesh.flipSided = true
     mesh.matrixAutoUpdate = false
     mesh.updateMatrix()
@@ -566,8 +566,8 @@ shaders =
       varying vec3 vNormal;
       uniform vec3 color;
       void main() {
-        float intensity = pow( 0.8 - dot( vNormal, vec3( 0, 0, 1.0 ) ), 12.0 );
-        gl_FragColor = vec4( color, 1.0 ) * intensity;
+        float intensity = pow( 0.5 - dot( vNormal, vec3( 0, 0, 1.0 ) ), 4.0 );
+        gl_FragColor = vec4( color, 0.6 ) * intensity;
       }
     """
   point:
