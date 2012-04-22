@@ -499,9 +499,10 @@ create: ->
     render()
     initAnimation()
 
-  moveZoomTarget = (amount) ->
+  moveZoomTarget = (amount, clamp=true) ->
     distanceTarget -= amount
-    distanceTarget = Math.max Math.min(distanceTarget, MAX_DISTANCE), MIN_DISTANCE
+    if clamp
+      distanceTarget = Math.max Math.min(distanceTarget, MAX_DISTANCE), MIN_DISTANCE
 
   setZoomTarget = (zoom) ->
     distanceTarget = zoom
