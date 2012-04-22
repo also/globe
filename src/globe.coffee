@@ -102,9 +102,12 @@ create: ->
     earthTexture = THREE.ImageUtils.loadTexture opts.globeTexture ? 'world.jpg', null, opts.onLoad
 
     scene = new THREE.Scene
-    scene.add createEarth()
     if opts.atmosphere ? true
       scene.add createAtmosphere()
+    else
+      atmosphereColor = 0
+
+    scene.add createEarth()
 
     if opts.stars
       scene.add createStars()
@@ -123,6 +126,7 @@ create: ->
   createEarth = ->
     shader = shaders.earth
     uniforms = THREE.UniformsUtils.clone(shader.uniforms)
+    uniforms.atmosphereColor.value = new THREE.Color atmosphereColor
     uniforms.texture.texture = earthTexture
     material = new THREE.ShaderMaterial(
       uniforms: uniforms
@@ -562,12 +566,14 @@ shaders =
         type: 't'
         value: 0
         texture: null
+      atmosphereColor:
+        type: 'c'
     vertexShader: """
       varying vec3 vNormal;
       varying vec2 vUv;
       void main() {
-        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-        vNormal = normalize( normalMatrix * normal );
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        vNormal = normalize(normalMatrix * normal);
         vUv = uv;
       }
     """
@@ -575,11 +581,12 @@ shaders =
       uniform sampler2D texture;
       varying vec3 vNormal;
       varying vec2 vUv;
+      uniform vec3 atmosphereColor;
       void main() {
-        vec3 diffuse = texture2D( texture, vUv ).xyz;
-        float intensity = 1.05 - dot( vNormal, vec3( 0.0, 0.0, 1.0 ) );
-        vec3 atmosphere = vec3( 1.0, 1.0, 1.0 ) * pow( intensity, 3.0 );
-        gl_FragColor = vec4( diffuse + atmosphere, 1.0 );
+        vec3 diffuse = texture2D(texture, vUv).xyz;
+        float intensity = 1.05 - dot(vNormal, vec3(0.0, 0.0, 1.0));
+        vec3 atmosphere = atmosphereColor * pow(intensity, 3.0);
+        gl_FragColor = vec4(diffuse + atmosphere, 1.0);
       }
     """
   atmosphere:
@@ -589,16 +596,16 @@ shaders =
     vertexShader: """
       varying vec3 vNormal;
       void main() {
-        vNormal = normalize( normalMatrix * normal );
-        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+        vNormal = normalize(normalMatrix * normal);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
     """
     fragmentShader: """
       varying vec3 vNormal;
       uniform vec3 color;
       void main() {
-        float intensity = pow( 0.5 - dot( vNormal, vec3( 0, 0, 1.0 ) ), 4.0 );
-        gl_FragColor = vec4( color, 0.6 ) * intensity;
+        float intensity = pow(0.5 - dot(vNormal, vec3(0, 0, 1.0)), 4.0);
+        gl_FragColor = vec4(color, 0.6) * intensity;
       }
     """
   point:
@@ -617,7 +624,7 @@ shaders =
       #endif
 
       // found, randomly, at https://www.h3dapi.org:8090/MedX3D/trunk/MedX3D/src/shaders/StyleFunctions.glsl
-      vec3 HSVtoRGB(float h, float s, float v ) {
+      vec3 HSVtoRGB(float h, float s, float v) {
         if (s == 0.0) return vec3(v);
 
         h /= 60.0;
