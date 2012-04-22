@@ -561,17 +561,19 @@
         return distanceTarget = zoom;
       };
       setZoom = function(zoom) {
-        return distance = distanceTarget = zoom;
+        distance = distanceTarget = zoom;
+        return forceUpdate = true;
       };
       setRotation = function(x, y) {
         rotation = {
           x: x,
           y: y
         };
-        return rotationTarget = {
+        rotationTarget = {
           x: x,
           y: y
         };
+        return forceUpdate = true;
       };
       setRotationTarget = function(x, y) {
         if (x == null) x = rotationTarget.x;
