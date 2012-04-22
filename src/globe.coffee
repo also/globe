@@ -107,7 +107,8 @@ create: ->
     else
       atmosphereColor = 0
 
-    scene.add createEarth()
+    if opts.globe ? true
+      scene.add createEarth()
 
     if opts.stars
       scene.add createStars()
