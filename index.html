@@ -5,21 +5,54 @@
     <style>
       * {
         font-family: helvetica, arial, sans-serif;
+        color: #333;
+      }
+      #content {
+        width: 800px;
+        margin: auto;
       }
     </style>
+    <script src="https://raw.github.com/mrdoob/three.js/r47/build/Three.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+    <script src="build/globe.js"></script>
   </head>
   <body>
-    <h1>globe</h1>
+    <div id="content">
+      <h1>globe</h1>
 
-    <a href="build/globe.js">Download</a>
+      <div id="globe"></div>
 
-    <h2>Examples</h2>
-    <ul>
-      <li><a href="examples/plain">plain</a></li>
-      <li><a href="examples/cities">cities</a></li>
-      <li><a href="examples/population">population</a></li>
-    </ul>
-    
+      <a href="build/globe.js">Download</a>
+
+      <h2>Examples</h2>
+      <ul>
+        <li><a href="examples/plain">plain</a></li>
+        <li><a href="examples/cities">cities</a></li>
+        <li><a href="examples/population">population</a></li>
+      </ul>
+    </div>
+    <script>
+      var g = globe.create();
+      g.init({
+        container: $('#globe')[0],
+        width: 800,
+        height: 500,
+        backgroundColor: 0xeeeeee,
+        atmosphere: false,
+        globeTexture: '../../natural-earth.jpg'});
+      g.setZoomTarget(900);
+      g.setRotation(Math.PI, 0.7);
+      g.initAnimation();
+      g.observeMouse();
+      var startTime = + new Date;
+      function spin() {
+        requestAnimationFrame(function () {
+          g.setRotation((new Date - startTime) / 1000, 0);
+          spin()
+        });
+      }
+      spin();
+    </script>
     <a href="https://github.com/also/globe"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://a248.e.akamai.net/assets.github.com/img/e6bef7a091f5f3138b8cd40bc3e114258dd68ddf/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67" alt="Fork me on GitHub"></a>
   </body>
 </html>
