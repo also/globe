@@ -14,7 +14,10 @@ ORIGIN = new THREE.Vector3 0, 0, 0
 MIN_TARGET_DELTA = 0.0001
 
 CIRCLE_IMAGE = do ->
-  size = 64
+  # FIXME figure out why this makes things look worse
+  # https://github.com/also/globe/issues/7
+  # size = 64
+  size = 66
   r = size / 2
   canvas = $("<canvas width='#{size}' height='#{size}'/>").get 0
   ctx = canvas.getContext '2d'
