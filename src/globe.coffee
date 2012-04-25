@@ -14,10 +14,7 @@ ORIGIN = new THREE.Vector3 0, 0, 0
 MIN_TARGET_DELTA = 0.0001
 
 CIRCLE_IMAGE = do ->
-  # FIXME figure out why this makes things look worse
-  # https://github.com/also/globe/issues/7
-  # size = 64
-  size = 66
+  size = 64
   r = size / 2
   canvas = $("<canvas width='#{size}' height='#{size}'/>").get 0
   ctx = canvas.getContext '2d'
@@ -195,6 +192,9 @@ create: ->
       image.num = num
       texture = new THREE.Texture image
       texture.needsUpdate = true
+      # FIXME figure out why this is necessary
+      # https://github.com/also/globe/issues/7
+      texture.minFilter = THREE.LinearFilter
       uniforms[uniformName] =
         type: 't'
         value: num
