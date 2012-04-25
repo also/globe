@@ -60,7 +60,8 @@ slerp = (p0, p1, t) ->
     _p0
   if t? then fn t else fn
 
-window.globe = create: ->
+window.globe =
+create: ->
   camera = null
   renderer = null
   scene = null
@@ -182,14 +183,25 @@ window.globe = create: ->
     ps
 
   createParticles = (opts) ->
-    texture = new THREE.Texture opts.texture ? CIRCLE_IMAGE
-    texture.needsUpdate = true
+    textures = opts.textures ? {default: opts.texture ? CIRCLE_IMAGE}
 
-    uniforms =
-      texture:
+    fragmentShaderTextures = ""
+    fragmentShaderTextureSelection = []
+
+    uniforms = {}
+    num = 0
+    for name, image of textures
+      uniformName = "texture_#{num}"
+      image.num = num
+      texture = new THREE.Texture image
+      texture.needsUpdate = true
+      uniforms[uniformName] =
         type: 't'
-        value: 0
+        value: num
         texture: texture
+      fragmentShaderTextures += "uniform sampler2D #{uniformName};\n"
+      fragmentShaderTextureSelection.push "if (f_textureNum == #{num}.0) {color = texture2D(#{uniformName}, 1.0 - gl_PointCoord);}"
+      num += 1
 
     attributes =
       size:
@@ -201,13 +213,17 @@ window.globe = create: ->
       particleOpacity:
         type: 'f'
         value: []
+      textureNum:
+        type: 'f'
+        value: []
 
     shader = shaders.particle
+    fragmentShader = fragmentShaderTextures + shader.fragmentShader.replace('// TEXTURE SELECTION', fragmentShaderTextureSelection.join('\n else\n '))
 
     material = new THREE.ShaderMaterial
       transparent: true
       vertexShader: shader.vertexShader
-      fragmentShader: shader.fragmentShader
+      fragmentShader: fragmentShader
       attributes: attributes
       uniforms: uniforms
 
@@ -222,6 +238,10 @@ window.globe = create: ->
         origin = destination = null
         slerpP = null
 
+        setTextureNum = (num) ->
+          attributes.textureNum.value[i] = num
+          attributes.textureNum.needsUpdate = true
+
         p =
           altitude: 0
           reset: ->
@@ -230,6 +250,7 @@ window.globe = create: ->
             @setSize opts.size ? 1
             @setColor new THREE.Color opts.color ? 0xffffff
             @setOpacity 1
+            setTextureNum 0
           setPosition: (lng, lat) ->
             normalizedPosition.copy llToXyz lng, lat, 1
             @setAltitude altitude
@@ -255,6 +276,9 @@ window.globe = create: ->
             position.copy(normalizedPosition).multiplyScalar SIZE * (1 + altitude)
             v.position = position
             geometry.__dirtyVertices = true
+          setTexture: (name) ->
+            num = textures[name].num
+            setTextureNum num
           hide: -> @setAltitude -1
 
         updateSlerp = ->
@@ -529,6 +553,8 @@ window.globe = create: ->
     createLocation
   }
 
+circle: CIRCLE_IMAGE
+
 shaders =
   earth:
     uniforms:
@@ -656,22 +682,27 @@ shaders =
       attribute float size;
       attribute vec3 particleColor;
       attribute float particleOpacity;
+      attribute float textureNum;
       varying vec4 f_color;
       varying float f_opacity;
+      varying float f_textureNum;
 
       void main() {
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         gl_PointSize = size;
         f_opacity = particleOpacity;
         f_color = vec4(particleColor, 1);
+        f_textureNum = textureNum;
       }
     """
     fragmentShader: """
-      uniform sampler2D texture;
       varying vec4 f_color;
       varying float f_opacity;
+      varying float f_textureNum;
 
       void main() {
-        gl_FragColor = vec4(f_color.xyz, f_opacity) * texture2D(texture, 1.0 - gl_PointCoord);
+        vec4 color;
+        // TEXTURE SELECTION
+        gl_FragColor = vec4(f_color.xyz, f_opacity) * color;
       }
     """
