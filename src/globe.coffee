@@ -251,10 +251,9 @@ create: ->
           altitude: 0
           reset: ->
             @setPosition 0,0
-            @hide()
             @setSize opts.size ? 1
             @setColor new THREE.Color opts.color ? 0xffffff
-            @setOpacity 1
+            @setOpacity opts.opacity ? 1
             setTextureNum 0
           setPosition: (lng, lat) ->
             normalizedPosition.copy llToXyz lng, lat, 1
@@ -284,7 +283,6 @@ create: ->
           setTexture: (name) ->
             num = textures[name].num
             setTextureNum num
-          hide: -> @setAltitude -1
 
         updateSlerp = ->
           if origin? and destination?
