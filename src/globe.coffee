@@ -451,7 +451,7 @@ create: ->
 
   initAnimation = ->
     previousTime = + new Date
-    window.requestAnimationFrame animate, renderer.domElement
+    animate()
 
   updatePosition = ->
     time = new Date
@@ -495,7 +495,7 @@ create: ->
 
   animate = (t) ->
     render()
-    initAnimation()
+    window.requestAnimationFrame animate, renderer.domElement
 
   moveZoomTarget = (amount, clamp=true) ->
     distanceTarget -= amount
