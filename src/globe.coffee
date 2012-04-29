@@ -99,8 +99,6 @@ create: ->
     camera = new THREE.PerspectiveCamera 30, width / height, 1, 10000
     camera.position.z = distance
 
-    earthTexture = THREE.ImageUtils.loadTexture opts.globeTexture ? 'world.jpg', null, opts.onLoad
-
     scene = new THREE.Scene
     if opts.atmosphere ? true
       scene.add createAtmosphere()
@@ -108,6 +106,7 @@ create: ->
       atmosphereColor = 0
 
     if opts.globe ? true
+      earthTexture = THREE.ImageUtils.loadTexture opts.globeTexture ? 'world.jpg', null, opts.onLoad
       scene.add createEarth()
 
     if opts.stars
