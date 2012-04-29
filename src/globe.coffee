@@ -690,25 +690,22 @@ shaders =
       attribute float particleOpacity;
       attribute float textureNum;
       varying vec4 f_color;
-      varying float f_opacity;
       varying float f_textureNum;
 
       void main() {
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         gl_PointSize = size;
-        f_opacity = particleOpacity;
-        f_color = vec4(particleColor, 1);
+        f_color = vec4(particleColor, particleOpacity);
         f_textureNum = textureNum;
       }
     """
     fragmentShader: """
       varying vec4 f_color;
-      varying float f_opacity;
       varying float f_textureNum;
 
       void main() {
         vec4 color;
         // TEXTURE SELECTION
-        gl_FragColor = vec4(f_color.xyz, f_opacity) * color;
+        gl_FragColor = f_color * color;
       }
     """
