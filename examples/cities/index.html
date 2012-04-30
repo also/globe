@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Cities Globe Example</title>
+<script src="https://raw.github.com/mrdoob/three.js/r47/build/Three.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script src="../../build/globe.js"></script>
+<script src="../../build/labels.js"></script>
+<style>
+  svg, canvas {
+    position: absolute;
+  }
+  svg {
+    z-index: 1;
+    opacity: 0.7;
+  }
+  canvas {
+    z-index: 0;
+  }
+  g {
+    sdisplay: none;
+  }
+  circle {
+    display: none;
+    fill: #fff;
+    stroke: #666;
+  }
+  text {
+    text-anchor: middle;
+    dominant-baseline: central;
+    font-family: helvetica;
+    fill: #fff;
+    font-size: 10px;
+    font-weight: bold;
+  }
+  text.shadow {
+    fill: #222;
+    stroke: #666;
+    stroke-width: 2px;
+  }
+
+  .scale2 text, .scale3 text {
+    font-size: 6px;
+  }
+</style>
+</head>
+<body>
+<svg id="cities"></svg>
+<script src="cities.js"></script>
+</body>
+</html>
