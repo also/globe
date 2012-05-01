@@ -451,10 +451,9 @@ create: ->
 
   initAnimation = ->
     previousTime = + new Date
-    animate()
+    nextFrame()
 
-  updatePosition = ->
-    time = new Date
+  updatePosition = (time) ->
     deltaT = time - previousTime
     updated = false
     if Math.abs(rotationTarget.x - rotation.x) < MIN_TARGET_DELTA
@@ -487,15 +486,18 @@ create: ->
 
     previousTime = time
 
-  render = ->
-    updatePosition()
+  render = (time) ->
+    updatePosition time
     renderer.clear()
 
     renderer.render scene, camera
 
-  animate = (t) ->
-    render()
+  nextFrame = ->
     window.requestAnimationFrame animate, renderer.domElement
+
+  animate = (t) ->
+    render t
+    nextFrame()
 
   moveZoomTarget = (amount, clamp=true) ->
     distanceTarget -= amount
