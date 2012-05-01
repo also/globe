@@ -204,7 +204,7 @@ create: ->
         value: num
         texture: texture
       fragmentShaderTextures += "uniform sampler2D #{uniformName};\n"
-      fragmentShaderTextureSelection.push "if (f_textureNum == #{num}.0) {color = texture2D(#{uniformName}, 1.0 - gl_PointCoord);}"
+      fragmentShaderTextureSelection.push "if (f_textureNum == #{num}.0) {color = texture2D(#{uniformName}, vec2(gl_PointCoord.x, 1.0 - gl_PointCoord.y));}"
       num += 1
 
     attributes =
