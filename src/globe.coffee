@@ -71,6 +71,8 @@ create: ->
   previousTime = null
   projector = new THREE.Projector
 
+  cameraTarget = null
+
   distance = 100000
   distanceTarget = 1000
 
@@ -100,6 +102,7 @@ create: ->
     camera.position.z = distance
 
     scene = new THREE.Scene
+    cameraTarget = scene
     if opts.atmosphere ? true
       scene.add createAtmosphere()
     else
@@ -471,8 +474,7 @@ create: ->
     previousTime = + new Date
     nextFrame()
 
-  updatePosition = (time) ->
-    deltaT = time - previousTime
+  updateSatelliteCamera = (deltaT) ->
     updated = false
     if Math.abs(rotationTarget.x - rotation.x) < MIN_TARGET_DELTA
       rotation.x = rotationTarget.x
@@ -494,11 +496,18 @@ create: ->
     camera.position.y = distance * Math.sin(rotation.y)
     camera.position.z = distance * Math.cos(rotation.x) * Math.cos(rotation.y)
 
+    updated
+
+  updatePosition = (time) ->
+    deltaT = time - previousTime
+
+    updated = updateSatelliteCamera deltaT
+
     # you need to update lookAt every frame
 
     if updated or forceUpdate
       cameraPositionNormalized.copy(camera.position).normalize()
-      camera.lookAt scene.position
+      camera.lookAt cameraTarget.position
       forceUpdate = false
       onupdate?()
 
