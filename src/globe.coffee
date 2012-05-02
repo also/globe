@@ -134,7 +134,7 @@ create: ->
       fragmentShader: shader.fragmentShader
     )
 
-    geometry = new THREE.SphereGeometry SIZE, 40, 30
+    geometry = new THREE.SphereGeometry SIZE, 100, 50
     mesh = new THREE.Mesh geometry, material
 
     # https://github.com/mrdoob/three.js/issues/1123
@@ -153,7 +153,7 @@ create: ->
       vertexShader: shader.vertexShader
       fragmentShader: shader.fragmentShader
     )
-    geometry = new THREE.SphereGeometry SIZE, 40, 30
+    geometry = new THREE.SphereGeometry SIZE, 100, 50
     mesh = new THREE.Mesh geometry, material
     mesh.scale.set 1.4, 1.4, 1.4
     mesh.flipSided = true
