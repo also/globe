@@ -189,23 +189,36 @@ create: ->
     fragmentShaderTextures = ""
     fragmentShaderTextureSelection = []
 
+    textureInfo =
+      none: {num: -1, scale: 0}
+
     uniforms = {}
+
     num = 0
     for name, image of textures
       uniformName = "texture_#{num}"
-      image.num = num
       texture = new THREE.Texture image
       texture.needsUpdate = true
       # FIXME figure out why this is necessary
       # https://github.com/also/globe/issues/7
       texture.minFilter = THREE.LinearFilter
+      if image.width == image.height
+        scale = new THREE.Vector2 1, 1
+      else if image.width < image.height
+        scale = new THREE.Vector2 image.height / image.width, 1
+      else
+        scale = new THREE.Vector2 1, image.width / image.height
+
       uniforms[uniformName] =
         type: 't'
         value: num
         texture: texture
       fragmentShaderTextures += "uniform sampler2D #{uniformName};\n"
-      fragmentShaderTextureSelection.push "if (f_textureNum == #{num}.0) {color = texture2D(#{uniformName}, vec2(gl_PointCoord.x, 1.0 - gl_PointCoord.y));}"
+      fragmentShaderTextureSelection.push "if (f_textureNum == #{num}.0) {color = texture2D(#{uniformName}, position);}"
+      textureInfo[name] = {num, scale}
       num += 1
+
+    defaultTexture = textureInfo.default ? textureInfo.none
 
     attributes =
       size:
@@ -219,6 +232,9 @@ create: ->
         value: []
       textureNum:
         type: 'f'
+        value: []
+      textureScale:
+        type: 'v2'
         value: []
 
     shader = shaders.particle
@@ -242,9 +258,11 @@ create: ->
         origin = destination = null
         slerpP = null
 
-        setTextureNum = (num) ->
-          attributes.textureNum.value[i] = num
+        setTexture = (t) ->
+          attributes.textureNum.value[i] = t.num
           attributes.textureNum.needsUpdate = true
+          attributes.textureScale.value[i] = t.scale
+          attributes.textureScale.needsUpdate
 
         p =
           altitude: 0
@@ -253,7 +271,7 @@ create: ->
             @setSize opts.size ? 1
             @setColor new THREE.Color opts.color ? 0xffffff
             @setOpacity opts.opacity ? 1
-            setTextureNum 0
+            setTexture defaultTexture
           setPosition: (lng, lat) ->
             normalizedPosition.copy llToXyz lng, lat, 1
             @setAltitude altitude
@@ -280,8 +298,8 @@ create: ->
             v.position = position
             geometry.__dirtyVertices = true
           setTexture: (name) ->
-            num = textures[name].num
-            setTextureNum num
+            t = textureInfo[name]
+            setTexture t
 
         updateSlerp = ->
           if origin? and destination?
@@ -691,23 +709,38 @@ shaders =
       attribute vec3 particleColor;
       attribute float particleOpacity;
       attribute float textureNum;
+      attribute vec2 textureScale;
       varying vec4 f_color;
       varying float f_textureNum;
+      varying vec2 f_textureScale;
 
       void main() {
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         gl_PointSize = size;
         f_color = vec4(particleColor, particleOpacity);
         f_textureNum = textureNum;
+        f_textureScale = textureScale;
       }
     """
     fragmentShader: """
       varying vec4 f_color;
       varying float f_textureNum;
+      varying vec2 f_textureScale;
 
       void main() {
         vec4 color;
-        // TEXTURE SELECTION
-        gl_FragColor = f_color * color;
+        if (f_textureNum < 0.0) {
+          gl_FragColor = f_color;
+        }
+        else {
+          vec2 position = vec2(gl_PointCoord.x, 1.0 - gl_PointCoord.y) * f_textureScale;
+          if (position.x >= 0.0 && position.x <= 1.0 && position.y >= 0.0 && position.y <= 1.0) {
+            // TEXTURE SELECTION
+            gl_FragColor = f_color * color;
+          }
+          else {
+            gl_FragColor = vec4(0,0,0,0);
+          }
+        }
       }
     """
