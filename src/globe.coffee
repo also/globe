@@ -501,7 +501,14 @@ create: ->
     updated
 
   updateFollowingCamera = (deltaT) ->
-    camera.position.copy following.previousPosition
+    if following.distance?
+      following.direction.sub following.particle.position, following.previousPosition
+      following.direction.normalize()
+      camera.position.copy following.direction
+      camera.position.multiplyScalar -following.distance
+      camera.position.addSelf following.particle.position
+    else
+      camera.position.copy following.previousPosition
     cameraTarget = following.particle
 
     true
@@ -541,11 +548,13 @@ create: ->
     render t
     nextFrame()
 
-  follow = (particle) ->
+  follow = (particle, distance) ->
     following =
       particle: particle
       started: false
       previousPosition: new THREE.Vector3
+      direction: new THREE.Vector3
+      distance: distance
 
   stopFollowing = ->
     cameraTarget = scene
