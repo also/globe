@@ -71,6 +71,7 @@ create: ->
   previousTime = null
   projector = new THREE.Projector
 
+  following = null
   cameraTarget = null
 
   distance = 100000
@@ -268,6 +269,7 @@ create: ->
           attributes.textureScale.needsUpdate
 
         p =
+          position: position
           altitude: 0
           reset: ->
             @setPosition 0,0
@@ -498,15 +500,28 @@ create: ->
 
     updated
 
+  updateFollowingCamera = (deltaT) ->
+    camera.position.copy following.previousPosition
+    cameraTarget = following.particle
+
+    true
+
+
   updatePosition = (time) ->
     deltaT = time - previousTime
 
-    updated = updateSatelliteCamera deltaT
+    if following?.started
+      updated = updateFollowingCamera deltaT
+    else
+      updated = updateSatelliteCamera deltaT
 
-    # you need to update lookAt every frame
+    if following?
+      following.started = true
+      following.previousPosition.copy following.particle.position
 
     if updated or forceUpdate
       cameraPositionNormalized.copy(camera.position).normalize()
+      # you need to update lookAt every frame
       camera.lookAt cameraTarget.position
       forceUpdate = false
       onupdate?()
@@ -525,6 +540,16 @@ create: ->
   animate = (t) ->
     render t
     nextFrame()
+
+  follow = (particle) ->
+    following =
+      particle: particle
+      started: false
+      previousPosition: new THREE.Vector3
+
+  stopFollowing = ->
+    cameraTarget = scene
+    following = null
 
   moveZoomTarget = (amount, clamp=true) ->
     distanceTarget -= amount
@@ -582,7 +607,9 @@ create: ->
     createBarChart,
     createParticles,
     updated,
-    createLocation
+    createLocation,
+    follow,
+    stopFollowing
   }
 
 circle: CIRCLE_IMAGE
