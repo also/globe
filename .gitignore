@@ -1,1 +1,4 @@
 build
+examples/cities/cities.js
+examples/points/points.js
+examples/population/population.js
