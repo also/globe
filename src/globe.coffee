@@ -82,8 +82,8 @@ create: ->
     y: 0
 
   rotationTarget =
-    x: Math.PI * 3/2
-    y: Math.PI / 6.0
+    x: 0
+    y: 0
 
   init = (opts={}) ->
     width = opts.width ? 800
