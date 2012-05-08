@@ -79,6 +79,11 @@ create: ->
   previousTime = null
   projector = new THREE.Projector
   cameraController = null
+  canvasSizeUniform =
+    type: 'v2'
+    value:
+      x: 0
+      y: 0
 
   satellite = new Satellite
 
@@ -99,6 +104,8 @@ create: ->
     camera = new THREE.PerspectiveCamera 30, width / height, 1, 10000
     setCameraController new SimpleCameraController this
     cameraController.satellite = satellite
+    canvasSizeUniform.value.x = width
+    canvasSizeUniform.value.y = height
 
     scene = new THREE.Scene
     if opts.atmosphere ? true
@@ -122,6 +129,9 @@ create: ->
     height = h
     renderer.setSize width, height
     camera.aspect = width / height
+    canvasSizeUniform.value.x = width
+    canvasSizeUniform.value.y = height
+    canvasSizeUniform.needsUpdate = true
     camera.updateProjectionMatrix()
 
   initAnimation = ->
@@ -293,11 +303,16 @@ create: ->
         value: []
 
     shader = shaders.particle
+    vertexShader = shader.vertexShader
+    if opts.sizeAttenuation ? true
+      vertexShader = '#define USE_SIZEATTENUATION\n' + vertexShader
+      uniforms.canvasSize = canvasSizeUniform
+
     fragmentShader = fragmentShaderTextures + shader.fragmentShader.replace('// TEXTURE SELECTION', fragmentShaderTextureSelection.join('\n else\n '))
 
     material = new THREE.ShaderMaterial
       transparent: true
-      vertexShader: shader.vertexShader
+      vertexShader: vertexShader
       fragmentShader: fragmentShader
       attributes: attributes
       uniforms: uniforms
@@ -764,6 +779,7 @@ shaders =
   particle:
     vertexShader: """
       attribute float size;
+      uniform vec2 canvasSize;
       attribute vec3 particleColor;
       attribute float particleOpacity;
       attribute float textureNum;
@@ -773,8 +789,13 @@ shaders =
       varying vec2 f_textureScale;
 
       void main() {
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        gl_PointSize = size;
+        vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+        gl_Position = projectionMatrix * mvPosition;
+        #ifdef USE_SIZEATTENUATION
+          gl_PointSize = size * (canvasSize.y / length(mvPosition.xyz));
+        #else
+          gl_PointSize = size;
+        #endif
         f_color = vec4(particleColor, particleOpacity);
         f_textureNum = textureNum;
         f_textureScale = textureScale;
