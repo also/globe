@@ -23,7 +23,5 @@ $.getJSON 'population909500.json', (json) ->
 
   chart.add()
 
-  earth.setZoomTarget 900
-  earth.setRotation Math.PI, 0.7
   earth.initAnimation()
-  earth.observeMouse()
+  globe.observeMouse earth.satellite, earth.domElement

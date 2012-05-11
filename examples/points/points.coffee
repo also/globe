@@ -43,7 +43,6 @@ image.onload = ->
       if r + g > COLOR_THRESHOLD
         points.push {lat, lng, color}
 
-  console.log points.length
   particles = earth.createParticles particleCount: points.length, size: 2
   for {lat, lng, color}, i in points
     particle = particles.particles[i]
@@ -52,8 +51,5 @@ image.onload = ->
 
   particles.add()
 
-  earth.setZoomTarget 1200
-  earth.setRotation Math.PI, 0.7
   earth.initAnimation()
-  earth.observeMouse()
-  console.log 'done'
+  globe.observeMouse earth.satellite, earth.domElement

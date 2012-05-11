@@ -19,7 +19,5 @@ $.getJSON 'cities.json', (json) ->
     context: earth
 
   earth.init container: document.body, atmosphereColor: 0x70A9D1, globeTexture: '../../natural-earth.jpg', onupdate: cities.onupdate, width: WIDTH, height: HEIGHT
-  earth.setZoomTarget 900
-  earth.setRotation Math.PI, 0.7
   earth.initAnimation()
-  earth.observeMouse target: citiesElt
+  globe.observeMouse earth.satellite, citiesElt

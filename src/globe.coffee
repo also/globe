@@ -304,7 +304,7 @@ create: ->
   createStars = ->
     geometry = new THREE.Geometry
     for i in [1..800]
-      v = new THREE.Vertex srand(SIZE * 10 + Math.random() * SIZE * 5)
+      v = new THREE.Vector3 srand(SIZE * 10 + Math.random() * SIZE * 5)
       geometry.vertices.push v
 
     texture = new THREE.Texture CIRCLE_IMAGE
@@ -390,9 +390,8 @@ create: ->
     geometry = new THREE.Geometry
 
     particles = for i in [0...opts.particleCount]
-      v = new THREE.Vertex
-      do (v, i) ->
-        position = new THREE.Vector3
+      position = new THREE.Vector3
+      do (position, i) ->
         normalizedPosition = new THREE.Vector3
         altitude = 0
         origin = destination = null
@@ -436,8 +435,7 @@ create: ->
             @setAltitude altitude
           setAltitude: (altitude) ->
             position.copy(normalizedPosition).multiplyScalar SIZE * (1 + altitude)
-            v.position = position
-            geometry.__dirtyVertices = true
+            geometry.verticesNeedUpdate = true
           setTexture: (name) ->
             t = textureInfo[name]
             setTexture t
@@ -449,7 +447,7 @@ create: ->
 
         p.reset()
 
-        geometry.vertices.push(v)
+        geometry.vertices.push(position)
         p
 
     add = ->
@@ -467,7 +465,7 @@ create: ->
     defaultPointColor = new THREE.Color
     opts.defaultDimension ?= 0.75
     defaultPointGeometry = new THREE.CubeGeometry opts.defaultDimension, opts.defaultDimension, 1
-    defaultPointGeometry.vertices.forEach (v) -> v.position.z += 0.5
+    defaultPointGeometry.vertices.forEach (v) -> v.z += 0.5
 
     geometry = new THREE.Geometry
     # making the geometry dynamic is necessary to have three.js update custom
