@@ -541,18 +541,21 @@ create: ->
     deltaT = time - previousTime
 
     if following?.started
-      updated = updateFollowingCamera deltaT
+      cameraMoved = updateFollowingCamera deltaT
     else
-      updated = updateSatelliteCamera deltaT
+      cameraMoved = updateSatelliteCamera deltaT
 
     if following?
       following.started = true
       following.previousPosition.copy following.particle.position
 
-    if updated or forceUpdate
+    if cameraMoved
       cameraPositionNormalized.copy(camera.position).normalize()
       # you need to update lookAt every frame
       camera.lookAt cameraTarget.position
+      forceUpdate = true
+
+    if forceUpdate
       forceUpdate = false
       onupdate?()
 
