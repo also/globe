@@ -1,7 +1,7 @@
 SIZE = 200
 
 ROTATE_RATE = 0.005
-DISTANCE_RATE = 0.015
+DISTANCE_RATE = 0.015 / 4
 
 MIN_DISTANCE = 350
 MAX_DISTANCE = 1000
@@ -11,7 +11,7 @@ MIN_ROTATE_Y = -MAX_ROTATE_Y
 
 ORIGIN = new THREE.Vector3 0, 0, 0
 
-MIN_TARGET_DELTA = 0.0001
+MIN_TARGET_DELTA = 0.005
 
 CIRCLE_IMAGE = do ->
   size = 64
@@ -76,13 +76,56 @@ create: ->
   distance = 100000
   distanceTarget = 1000
 
-  rotation =
-    x: 0
-    y: 0
+  satellite =
+    updated: true
+    moving: false
+    position:
+      lng: 0
+      lat: 0
+    positionTarget:
+      lng: 0
+      lat: 0
+    altitude: 4
+    altitudeTarget: 4
 
-  rotationTarget =
-    x: 0
-    y: 0
+    setPosition: ({lng, lat}) ->
+      lat ?= @position.lat
+      lng ?= @position.lng
+      @position = {lng, lat}
+      @positionTarget = {lng, lat}
+      @updated = true
+      @moving = false
+
+    setAltitude: (@altitude) ->
+      @altitudeTarget = @altitude
+      @updated = true
+      @moving = false
+
+    update: (deltaT) ->
+      if @moving
+        moved = false
+        rotateDistance = Math.min(1, ROTATE_RATE * deltaT)
+        if Math.abs(@positionTarget.lng - @position.lng) < MIN_TARGET_DELTA
+          @position.lng = @positionTarget.lng
+        else
+          moved = true
+          @position.lng += (@positionTarget.lng - @position.lng) * rotateDistance
+
+        if Math.abs(@positionTarget.lat - @position.lat) < MIN_TARGET_DELTA
+          @position.lat = @positionTarget.lat
+        else
+          moved = true
+          @position.lat += (@positionTarget.lat - @position.lat) * rotateDistance
+
+        if Math.abs(@altitudeTarget - @altitude) < MIN_TARGET_DELTA
+          @altitude = @altitudeTarget
+        else
+          moved = true
+          @altitude += (@altitudeTarget - @altitude) * Math.min(1, DISTANCE_RATE * deltaT)
+        @moving = moved
+      result = @moving or @updated
+      @updated = false
+      result
 
   init = (opts={}) ->
     width = opts.width ? 800
@@ -99,7 +142,6 @@ create: ->
     renderer.setClearColorHex backgroundColor, opts.backgroundOpacity ? 1
 
     camera = new THREE.PerspectiveCamera 30, width / height, 1, 10000
-    camera.position.z = distance
 
     scene = new THREE.Scene
     cameraTarget = scene
@@ -436,7 +478,7 @@ create: ->
 
     $domElement = $(target)
     $domElement.bind 'mousewheel', (e) ->
-      moveZoomTarget(e.originalEvent.wheelDeltaY * 0.3)
+      satellite.altitudeTarget -= e.originalEvent.wheelDeltaY * (0.005)
       e.preventDefault()
 
     mouseup = (e) ->
@@ -445,12 +487,12 @@ create: ->
 
     mousemove = (e) ->
       mouse = x: -e.clientX, y: e.clientY
-      zoomDamp = distance / 1000
+      zoomDamp = (satellite.altitude * SIZE + SIZE) / 1000
 
-      rotationTarget.x = targetDown.x + (mouse.x - mouseDown.x) * 0.005 * zoomDamp
-      rotationTarget.y = targetDown.y + (mouse.y - mouseDown.y) * 0.005 * zoomDamp
+      satellite.positionTarget.lng = targetDown.lng + (mouse.x - mouseDown.x) * .25 * zoomDamp
+      satellite.positionTarget.lat = targetDown.lat + (mouse.y - mouseDown.y) * .25 * zoomDamp
 
-      rotationTarget.y = Math.max MIN_ROTATE_Y, Math.min(MAX_ROTATE_Y, rotationTarget.y)
+      #rotationTarget.y = Math.max MIN_ROTATE_Y, Math.min(MAX_ROTATE_Y, rotationTarget.y)
 
     removeMouseMoveEventListeners = ->
       $domElement
@@ -467,7 +509,7 @@ create: ->
         removeMouseMoveEventListeners()
 
       mouseDown = x: -e.clientX, y: e.clientY
-      targetDown = x: rotationTarget.x, y: rotationTarget.y
+      targetDown = lng: satellite.positionTarget.lng, lat: satellite.positionTarget.lat
 
       $domElement.css 'cursor', 'move'
 
@@ -476,26 +518,9 @@ create: ->
     nextFrame()
 
   updateSatelliteCamera = (deltaT) ->
-    updated = false
-    if Math.abs(rotationTarget.x - rotation.x) < MIN_TARGET_DELTA
-      rotation.x = rotationTarget.x
-    else
-      updated = true
-      rotation.x += (rotationTarget.x - rotation.x) * Math.min(1, ROTATE_RATE * deltaT)
-    if Math.abs(rotationTarget.y - rotation.y) < MIN_TARGET_DELTA
-      rotation.y = rotationTarget.y
-    else
-      updated = true
-      rotation.y += (rotationTarget.y - rotation.y) * Math.min(1, ROTATE_RATE * deltaT)
-    if Math.abs(distanceTarget - distance) < MIN_TARGET_DELTA
-      distance = distanceTarget
-    else
-      updated = true
-      distance += (distanceTarget - distance) * Math.min(1, DISTANCE_RATE * deltaT)
-
-    camera.position.x = distance * Math.sin(rotation.x) * Math.cos(rotation.y)
-    camera.position.y = distance * Math.sin(rotation.y)
-    camera.position.z = distance * Math.cos(rotation.x) * Math.cos(rotation.y)
+    updated = satellite.update deltaT
+    {lng, lat} = satellite.position
+    llToXyz lng, lat, SIZE + SIZE * satellite.altitude, camera.position
 
     updated
 
@@ -511,7 +536,6 @@ create: ->
     cameraTarget = following.particle
 
     true
-
 
   updatePosition = (time) ->
     deltaT = time - previousTime
@@ -559,32 +583,6 @@ create: ->
     cameraTarget = scene
     following = null
 
-  moveZoomTarget = (amount, clamp=true) ->
-    distanceTarget -= amount
-    if clamp
-      distanceTarget = Math.max Math.min(distanceTarget, MAX_DISTANCE), MIN_DISTANCE
-
-  setZoomTarget = (zoom) ->
-    distanceTarget = zoom
-
-  setZoom = (zoom) ->
-    distance = distanceTarget = zoom
-    forceUpdate = true
-
-  setRotation = (x, y) ->
-    rotation = {x, y}
-    rotationTarget = {x, y}
-    forceUpdate = true
-
-  setRotationTarget = (x, y) ->
-    x ?= rotationTarget.x
-    y ?= rotationTarget.y
-    rotationTarget = {x, y}
-
-  moveRotationTarget = (x, y) ->
-    rotationTarget.x += x
-    rotationTarget.y += y
-
   createLocation = (lng, lat) ->
     pos = llToXyz lng, lat
     projectedPos = pos.clone()
@@ -606,18 +604,13 @@ create: ->
     resize,
     render,
     observeMouse,
-    setZoom,
-    setZoomTarget,
-    moveZoomTarget,
-    setRotation,
-    setRotationTarget,
-    moveRotationTarget,
     createBarChart,
     createParticles,
     updated,
     createLocation,
     follow,
-    stopFollowing
+    stopFollowing,
+    satellite
   }
 
 circle: CIRCLE_IMAGE
