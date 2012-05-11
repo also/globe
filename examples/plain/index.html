@@ -10,10 +10,8 @@
 <script>
   var g = globe.create();
   g.init({container: document.body, atmosphereColor: 0x70A9D1, globeTexture: '../../natural-earth.jpg'});
-  g.setZoomTarget(900);
-  g.setRotation(Math.PI, 0.7);
   g.initAnimation();
-  g.observeMouse();
+  globe.observeMouse(g.satellite, g.domElement);
 </script>
 </body>
 </html>

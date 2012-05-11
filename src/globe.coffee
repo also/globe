@@ -478,47 +478,6 @@ create: ->
 
     {points, createBar, add, setSizes, setSizeTargets, setSizeTargetMix, mix}
 
-  observeMouse = (target=renderer.domElement)->
-    mouseDown = null
-    targetDown = null
-    rotationTargetDown = null
-
-    $domElement = $(target)
-    $domElement.bind 'mousewheel', (e) ->
-      satellite.altitudeTarget -= e.originalEvent.wheelDeltaY * (0.005)
-      e.preventDefault()
-
-    mouseup = (e) ->
-      removeMouseMoveEventListeners()
-      $domElement.css 'cursor', ''
-
-    mousemove = (e) ->
-      mouse = x: -e.clientX, y: e.clientY
-      zoomDamp = (satellite.altitude * SIZE + SIZE) / 1000
-
-      satellite.positionTarget.lng = targetDown.lng + (mouse.x - mouseDown.x) * .25 * zoomDamp
-      satellite.positionTarget.lat = targetDown.lat + (mouse.y - mouseDown.y) * .25 * zoomDamp
-
-      #rotationTarget.y = Math.max MIN_ROTATE_Y, Math.min(MAX_ROTATE_Y, rotationTarget.y)
-
-    removeMouseMoveEventListeners = ->
-      $domElement
-        .unbind('mousemove')
-        .unbind('mouseup', mouseup)
-
-    $domElement.bind 'mousedown', (e) ->
-      e.preventDefault()
-      $domElement.bind 'mousemove', mousemove
-
-      $domElement.bind 'mouseup', mouseup
-
-      $domElement.bind 'mouseleave', (e) ->
-        removeMouseMoveEventListeners()
-
-      mouseDown = x: -e.clientX, y: e.clientY
-      targetDown = lng: satellite.positionTarget.lng, lat: satellite.positionTarget.lat
-
-      $domElement.css 'cursor', 'move'
 
   initAnimation = ->
     previousTime = + new Date
@@ -613,7 +572,6 @@ create: ->
     initAnimation,
     resize,
     render,
-    observeMouse,
     createBarChart,
     createParticles,
     updated,
@@ -624,6 +582,46 @@ create: ->
   }
 
 circle: CIRCLE_IMAGE
+observeMouse: (camera, target)->
+  mouseDown = null
+  targetDown = null
+  rotationTargetDown = null
+
+  $domElement = $(target)
+  $domElement.bind 'mousewheel', (e) ->
+    camera.setAltitudeTarget camera.altitudeTarget - e.originalEvent.wheelDeltaY * (0.005)
+    e.preventDefault()
+
+  mouseup = (e) ->
+    removeMouseMoveEventListeners()
+    $domElement.css 'cursor', ''
+
+  mousemove = (e) ->
+    mouse = x: -e.clientX, y: e.clientY
+    zoomDamp = (camera.altitude * SIZE + SIZE) / 1000
+
+    camera.setPositionTarget
+      lng: targetDown.lng + (mouse.x - mouseDown.x) * .25 * zoomDamp
+      lat: targetDown.lat + (mouse.y - mouseDown.y) * .25 * zoomDamp
+
+  removeMouseMoveEventListeners = ->
+    $domElement
+      .unbind('mousemove')
+      .unbind('mouseup', mouseup)
+
+  $domElement.bind 'mousedown', (e) ->
+    e.preventDefault()
+    $domElement.bind 'mousemove', mousemove
+
+    $domElement.bind 'mouseup', mouseup
+
+    $domElement.bind 'mouseleave', (e) ->
+      removeMouseMoveEventListeners()
+
+    mouseDown = x: -e.clientX, y: e.clientY
+    targetDown = lng: camera.positionTarget.lng, lat: camera.positionTarget.lat
+
+    $domElement.css 'cursor', 'move'
 
 shaders =
   earth:
