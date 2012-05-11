@@ -96,10 +96,17 @@ create: ->
       @updated = true
       @moving = false
 
+    setPositionTarget: ({lng, lat}) ->
+      @positionTarget = {lng, lat}
+      @moving = true
+
     setAltitude: (@altitude) ->
       @altitudeTarget = @altitude
       @updated = true
       @moving = false
+
+    setAltitudeTarget: (@altitudeTarget) ->
+      @moving = true
 
     update: (deltaT) ->
       if @moving
