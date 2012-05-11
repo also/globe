@@ -25,11 +25,10 @@ CIRCLE_IMAGE = do ->
   ctx.fill()
   canvas
 
-llToXyz = (lng, lat, size=SIZE) ->
+llToXyz = (lng, lat, size=SIZE, pos=new THREE.Vector3) ->
   phi = (90 - lat) * Math.PI / 180
   theta = (180 - lng) * Math.PI / 180
 
-  pos = new THREE.Vector3
   pos.x = size * Math.sin(phi) * Math.cos(theta)
   pos.y = size * Math.cos(phi)
   pos.z = size * Math.sin(phi) * Math.sin(theta)
