@@ -66,7 +66,7 @@ create: ->
   width = height = null
   onupdate = null
   cameraPositionNormalized = new THREE.Vector3
-  forceUpdate = false
+  forceUpdate = true
   previousTime = null
   projector = new THREE.Projector
 
