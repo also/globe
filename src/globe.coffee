@@ -175,6 +175,94 @@ create: ->
     camera.aspect = width / height
     camera.updateProjectionMatrix()
 
+  initAnimation = ->
+    previousTime = + new Date
+    nextFrame()
+
+  updateSatelliteCamera = (deltaT) ->
+    updated = satellite.update deltaT
+    {lng, lat} = satellite.position
+    llToXyz lng, lat, SIZE + SIZE * satellite.altitude, camera.position
+
+    updated
+
+  updateFollowingCamera = (deltaT) ->
+    if following.distance?
+      following.direction.sub following.particle.position, following.previousPosition
+      following.direction.normalize()
+      camera.position.copy following.direction
+      camera.position.multiplyScalar -following.distance
+      camera.position.addSelf following.particle.position
+    else
+      camera.position.copy following.previousPosition
+    cameraTarget = following.particle
+
+    true
+
+  updatePosition = (time) ->
+    deltaT = time - previousTime
+
+    if following?.started
+      cameraMoved = updateFollowingCamera deltaT
+    else
+      cameraMoved = updateSatelliteCamera deltaT
+
+    if following?
+      following.started = true
+      following.previousPosition.copy following.particle.position
+
+    if cameraMoved
+      cameraPositionNormalized.copy(camera.position).normalize()
+      # you need to update lookAt every frame
+      camera.lookAt cameraTarget.position
+      forceUpdate = true
+
+    if forceUpdate
+      forceUpdate = false
+      onupdate?()
+
+    previousTime = time
+
+  render = (time) ->
+    updatePosition time
+    renderer.clear()
+
+    renderer.render scene, camera
+
+  nextFrame = ->
+    window.requestAnimationFrame animate, renderer.domElement
+
+  animate = (t) ->
+    render t
+    nextFrame()
+
+  follow = (particle, distance) ->
+    following =
+      particle: particle
+      started: false
+      previousPosition: new THREE.Vector3
+      direction: new THREE.Vector3
+      distance: distance
+
+  stopFollowing = ->
+    cameraTarget = scene
+    following = null
+
+  createLocation = (lng, lat) ->
+    pos = llToXyz lng, lat
+    projectedPos = pos.clone()
+    posNormalized = pos.clone().normalize()
+
+    angle: -> Math.acos(posNormalized.dot cameraPositionNormalized)
+    screenPosition: ->
+      projectedPos.copy pos
+      screen = projector.projectVector projectedPos, camera
+      x: width * (screen.x + 1) / 2
+      y: height * (-screen.y + 1) / 2
+
+  updated = ->
+    forceUpdate = true
+
   createEarth = ->
     shader = shaders.earth
     uniforms = THREE.UniformsUtils.clone(shader.uniforms)
@@ -477,95 +565,6 @@ create: ->
       )
 
     {points, createBar, add, setSizes, setSizeTargets, setSizeTargetMix, mix}
-
-
-  initAnimation = ->
-    previousTime = + new Date
-    nextFrame()
-
-  updateSatelliteCamera = (deltaT) ->
-    updated = satellite.update deltaT
-    {lng, lat} = satellite.position
-    llToXyz lng, lat, SIZE + SIZE * satellite.altitude, camera.position
-
-    updated
-
-  updateFollowingCamera = (deltaT) ->
-    if following.distance?
-      following.direction.sub following.particle.position, following.previousPosition
-      following.direction.normalize()
-      camera.position.copy following.direction
-      camera.position.multiplyScalar -following.distance
-      camera.position.addSelf following.particle.position
-    else
-      camera.position.copy following.previousPosition
-    cameraTarget = following.particle
-
-    true
-
-  updatePosition = (time) ->
-    deltaT = time - previousTime
-
-    if following?.started
-      cameraMoved = updateFollowingCamera deltaT
-    else
-      cameraMoved = updateSatelliteCamera deltaT
-
-    if following?
-      following.started = true
-      following.previousPosition.copy following.particle.position
-
-    if cameraMoved
-      cameraPositionNormalized.copy(camera.position).normalize()
-      # you need to update lookAt every frame
-      camera.lookAt cameraTarget.position
-      forceUpdate = true
-
-    if forceUpdate
-      forceUpdate = false
-      onupdate?()
-
-    previousTime = time
-
-  render = (time) ->
-    updatePosition time
-    renderer.clear()
-
-    renderer.render scene, camera
-
-  nextFrame = ->
-    window.requestAnimationFrame animate, renderer.domElement
-
-  animate = (t) ->
-    render t
-    nextFrame()
-
-  follow = (particle, distance) ->
-    following =
-      particle: particle
-      started: false
-      previousPosition: new THREE.Vector3
-      direction: new THREE.Vector3
-      distance: distance
-
-  stopFollowing = ->
-    cameraTarget = scene
-    following = null
-
-  createLocation = (lng, lat) ->
-    pos = llToXyz lng, lat
-    projectedPos = pos.clone()
-    posNormalized = pos.clone().normalize()
-
-    angle: -> Math.acos(posNormalized.dot cameraPositionNormalized)
-    screenPosition: ->
-      projectedPos.copy pos
-      screen = projector.projectVector projectedPos, camera
-      x: width * (screen.x + 1) / 2
-      y: height * (-screen.y + 1) / 2
-
-  updated = ->
-    forceUpdate = true
 
   {
     init,
