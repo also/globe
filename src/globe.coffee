@@ -66,73 +66,15 @@ create: ->
   width = height = null
   onupdate = null
   cameraPositionNormalized = new THREE.Vector3
-  forceUpdate = true
+  forceUpdate = false
+  cameraMoved = true
   previousTime = null
   projector = new THREE.Projector
 
   following = null
   cameraTarget = null
 
-  distance = 100000
-  distanceTarget = 1000
-
-  satellite =
-    updated: true
-    moving: false
-    position:
-      lng: 0
-      lat: 0
-    positionTarget:
-      lng: 0
-      lat: 0
-    altitude: 4
-    altitudeTarget: 4
-
-    setPosition: ({lng, lat}) ->
-      lat ?= @position.lat
-      lng ?= @position.lng
-      @position = {lng, lat}
-      @positionTarget = {lng, lat}
-      @updated = true
-      @moving = false
-
-    setPositionTarget: ({lng, lat}) ->
-      @positionTarget = {lng, lat}
-      @moving = true
-
-    setAltitude: (@altitude) ->
-      @altitudeTarget = @altitude
-      @updated = true
-      @moving = false
-
-    setAltitudeTarget: (@altitudeTarget) ->
-      @moving = true
-
-    update: (deltaT) ->
-      if @moving
-        moved = false
-        rotateDistance = Math.min(1, ROTATE_RATE * deltaT)
-        if Math.abs(@positionTarget.lng - @position.lng) < MIN_TARGET_DELTA
-          @position.lng = @positionTarget.lng
-        else
-          moved = true
-          @position.lng += (@positionTarget.lng - @position.lng) * rotateDistance
-
-        if Math.abs(@positionTarget.lat - @position.lat) < MIN_TARGET_DELTA
-          @position.lat = @positionTarget.lat
-        else
-          moved = true
-          @position.lat += (@positionTarget.lat - @position.lat) * rotateDistance
-
-        if Math.abs(@altitudeTarget - @altitude) < MIN_TARGET_DELTA
-          @altitude = @altitudeTarget
-        else
-          moved = true
-          @altitude += (@altitudeTarget - @altitude) * Math.min(1, DISTANCE_RATE * deltaT)
-        @moving = moved
-      result = @moving or @updated
-      @updated = false
-      result
+  satellite = new Satellite
 
   init = (opts={}) ->
     width = opts.width ? 800
@@ -619,6 +561,65 @@ observeMouse: (camera, target)->
     targetDown = lng: camera.positionTarget.lng, lat: camera.positionTarget.lat
 
     $domElement.css 'cursor', 'move'
+
+class Satellite
+  constructor: ->
+    @updated = true
+    @moving = false
+    @position =
+      lng: 0
+      lat: 0
+    @positionTarget =
+      lng: 0
+      lat: 0
+    @altitude = 4
+    @altitudeTarget = 4
+
+  setPosition: ({lng, lat}) ->
+    lat ?= @position.lat
+    lng ?= @position.lng
+    @position = {lng, lat}
+    @positionTarget = {lng, lat}
+    @updated = true
+    @moving = false
+
+  setPositionTarget: ({lng, lat}) ->
+    @positionTarget = {lng, lat}
+    @moving = true
+
+  setAltitude: (@altitude) ->
+    @altitudeTarget = @altitude
+    @updated = true
+    @moving = false
+
+  setAltitudeTarget: (@altitudeTarget) ->
+    @moving = true
+
+  update: (deltaT) ->
+    if @moving
+      moved = false
+      rotateDistance = Math.min(1, ROTATE_RATE * deltaT)
+      if Math.abs(@positionTarget.lng - @position.lng) < MIN_TARGET_DELTA
+        @position.lng = @positionTarget.lng
+      else
+        moved = true
+        @position.lng += (@positionTarget.lng - @position.lng) * rotateDistance
+
+      if Math.abs(@positionTarget.lat - @position.lat) < MIN_TARGET_DELTA
+        @position.lat = @positionTarget.lat
+      else
+        moved = true
+        @position.lat += (@positionTarget.lat - @position.lat) * rotateDistance
+
+      if Math.abs(@altitudeTarget - @altitude) < MIN_TARGET_DELTA
+        @altitude = @altitudeTarget
+      else
+        moved = true
+        @altitude += (@altitudeTarget - @altitude) * Math.min(1, DISTANCE_RATE * deltaT)
+      @moving = moved
+    result = @moving or @updated
+    @updated = false
+    result
 
 shaders =
   earth:
