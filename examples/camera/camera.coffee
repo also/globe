@@ -5,27 +5,40 @@ eToLl = (e, o) ->
   lat = 90 - 180 * (y / o.height)
   {lng, lat}
 
+class SphericalCameraController
+  constructor: (@context) ->
+    @target = new globe.Satellite
+    @position = new globe.Satellite
+    @target.setAltitude 0
+
+    @position.orbiting = @target
+    @position.setPosition lng: 0, lat: 89
+    @position.setAltitude 1
+
+    @positionCartesian = new THREE.Vector3
+    @targetCartesian = new THREE.Vector3
+
+  update: (deltaT) ->
+    if @position.update deltaT
+      @position.toCartesian @positionCartesian
+      @target.toCartesian @targetCartesian
+      @context.updateCamera @positionCartesian, @targetCartesian, @positionCartesian
+
 init = ->
   window.earth = globe.create()
   earth.init container: document.body, width: 500, height: 500, atmosphere: false, globeTexture: '../../natural-earth.jpg'
-  cameraController = new globe.Satellite
-  cameraTarget = new globe.Satellite
-  cameraTarget.setAltitude 0
-  cameraController.orbiting = cameraTarget
-  cameraController.setPosition {lng: 0, lat: 90}
-  cameraController.setAltitude 1
-  earth.setCameraController cameraController
-  earth.setCameraTarget cameraTarget
+  controller = new SphericalCameraController earth
+  earth.setCameraController controller
   earth.initAnimation()
 
   $('#altitude').on 'change', (e) ->
-    cameraTarget.setAltitude this.value
+    controller.target.setAltitude this.value
   $('#distance').on 'change', (e) ->
-    cameraController.setAltitude this.value
+    controller.position.setAltitude this.value
   $('#lat').on 'change', ->
-    cameraController.setPosition lat: this.value
+    controller.position.setPosition lat: this.value
   $('#lng').on 'change', ->
-    cameraController.setPosition lng: this.value
+    controller.position.setPosition lng: this.value
 
   $img = $ 'img'
   $img.on 'mousemove', (e) ->

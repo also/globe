@@ -78,14 +78,9 @@ create: ->
   cameraMoved = true
   previousTime = null
   projector = new THREE.Projector
+  cameraController = null
 
-  following = null
-  cameraTarget = null
-
-  cameraController = new Satellite
-
-  # TODO remove
-  satellite = cameraController
+  satellite = new Satellite
 
   init = (opts={}) ->
     width = opts.width ? 800
@@ -102,9 +97,10 @@ create: ->
     renderer.setClearColorHex backgroundColor, opts.backgroundOpacity ? 1
 
     camera = new THREE.PerspectiveCamera 30, width / height, 1, 10000
+    setCameraController new SimpleCameraController this
+    cameraController.satellite = satellite
 
     scene = new THREE.Scene
-    cameraTarget = scene
     if opts.atmosphere ? true
       scene.add createAtmosphere()
     else
@@ -135,53 +131,21 @@ create: ->
   setCameraController = (controller) ->
     cameraController = controller
 
-  setCameraTarget = (target) ->
-    cameraTarget = target
-
-  updateSatelliteCamera = (deltaT) ->
-    updated = cameraController.update deltaT
-    cameraController.toCartesian camera.position
-    updated
-
-  updateFollowingCamera = (deltaT) ->
-    if following.distance?
-      following.direction.sub following.particle.position, following.previousPosition
-      following.direction.normalize()
-      camera.position.copy following.direction
-      camera.position.multiplyScalar -following.distance
-      camera.position.addSelf following.particle.position
-    else
-      camera.position.copy following.previousPosition
-    cameraTarget = following.particle
-
-    true
+  updateCamera = (position, target, up) ->
+    camera.position.copy position
+    camera.up.copy up if up?
+    camera.lookAt target ? scene.position
+    cameraPositionNormalized.copy(camera.position).normalize()
+    cameraMoved = true
 
   updatePosition = (time) ->
     deltaT = time - previousTime
 
-    if following?.started
-      cameraMoved or= updateFollowingCamera deltaT
-    else
-      cameraMoved or= updateSatelliteCamera deltaT
+    cameraController.update deltaT
 
-    if following?
-      following.started = true
-      following.previousPosition.copy following.particle.position
-
-    if cameraMoved
-      cameraPositionNormalized.copy(camera.position).normalize()
-      # you need to update lookAt every frame
-      if cameraTarget.toCartesian
-        targetPosition = new THREE.Vector3
-        cameraTarget.toCartesian targetPosition
-      else
-        targetPosition = cameraTarget.position
-      camera.lookAt targetPosition
-      cameraMoved = false
-      forceUpdate = true
-
-    if forceUpdate
+    if forceUpdate or cameraMoved
       forceUpdate = false
+      cameraMoved = false
       onupdate?()
 
     previousTime = time
@@ -198,18 +162,6 @@ create: ->
   animate = (t) ->
     render t
     nextFrame()
-
-  follow = (particle, distance) ->
-    following =
-      particle: particle
-      started: false
-      previousPosition: new THREE.Vector3
-      direction: new THREE.Vector3
-      distance: distance
-
-  stopFollowing = ->
-    cameraTarget = scene
-    following = null
 
   createLocation = (lng, lat) ->
     pos = llToXyz lng, lat
@@ -536,11 +488,9 @@ create: ->
     createParticles,
     updated,
     createLocation,
-    follow,
-    stopFollowing,
     satellite,
     setCameraController,
-    setCameraTarget
+    updateCamera
   }
 
 circle: CIRCLE_IMAGE
@@ -660,6 +610,15 @@ Satellite: class Satellite
       target.addSelf orbitingPosition
     else
       llToXyz @position.lng, @position.lat, SIZE + SIZE * @altitude, target
+
+SimpleCameraController: class SimpleCameraController
+  constructor: (@context) ->
+    @positionCartesian = new THREE.Vector3
+
+  update: (deltaT) ->
+    if @satellite.update deltaT
+      @satellite.toCartesian @positionCartesian
+      @context.updateCamera @positionCartesian
 
 shaders =
   earth:
