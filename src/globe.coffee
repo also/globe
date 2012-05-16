@@ -557,8 +557,15 @@ Satellite: class Satellite
     @moving = false
 
   setPositionTarget: ({lng, lat}) ->
+    lng ?= @positionTarget.lng
+    lat ?= @positionTarget.lat
     @positionTarget = {lng, lat}
     @moving = true
+
+  movePositionTarget: ({lng, lat}) ->
+    lng = @positionTarget.lng + (lng ? 0)
+    lat = @positionTarget.lat + (lat ? 0)
+    @setPositionTarget {lng, lat}
 
   setAltitude: (@altitude) ->
     @altitudeTarget = @altitude
