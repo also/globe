@@ -25,9 +25,17 @@ CIRCLE_IMAGE = do ->
   ctx.fill()
   canvas
 
-llToXyz = (lng, lat, size=SIZE, pos=new THREE.Vector3) ->
+llToRotationMatrix = (lng, lat) ->
+  theta = lng * Math.PI / 180
   phi = (90 - lat) * Math.PI / 180
+  m = new THREE.Matrix4
+  m.rotateY theta
+  m.rotateZ phi
+  m
+
+llToXyz = (lng, lat, size=SIZE, pos=new THREE.Vector3) ->
   theta = (180 - lng) * Math.PI / 180
+  phi = (90 - lat) * Math.PI / 180
 
   pos.x = size * Math.sin(phi) * Math.cos(theta)
   pos.y = size * Math.cos(phi)
@@ -74,7 +82,10 @@ create: ->
   following = null
   cameraTarget = null
 
-  satellite = new Satellite
+  cameraController = new Satellite
+
+  # TODO remove
+  satellite = cameraController
 
   init = (opts={}) ->
     width = opts.width ? 800
@@ -121,11 +132,15 @@ create: ->
     previousTime = + new Date
     nextFrame()
 
-  updateSatelliteCamera = (deltaT) ->
-    updated = satellite.update deltaT
-    {lng, lat} = satellite.position
-    llToXyz lng, lat, SIZE + SIZE * satellite.altitude, camera.position
+  setCameraController = (controller) ->
+    cameraController = controller
 
+  setCameraTarget = (target) ->
+    cameraTarget = target
+
+  updateSatelliteCamera = (deltaT) ->
+    updated = cameraController.update deltaT
+    cameraController.toCartesian camera.position
     updated
 
   updateFollowingCamera = (deltaT) ->
@@ -145,9 +160,9 @@ create: ->
     deltaT = time - previousTime
 
     if following?.started
-      cameraMoved = updateFollowingCamera deltaT
+      cameraMoved or= updateFollowingCamera deltaT
     else
-      cameraMoved = updateSatelliteCamera deltaT
+      cameraMoved or= updateSatelliteCamera deltaT
 
     if following?
       following.started = true
@@ -156,7 +171,13 @@ create: ->
     if cameraMoved
       cameraPositionNormalized.copy(camera.position).normalize()
       # you need to update lookAt every frame
-      camera.lookAt cameraTarget.position
+      if cameraTarget.toCartesian
+        targetPosition = new THREE.Vector3
+        cameraTarget.toCartesian targetPosition
+      else
+        targetPosition = cameraTarget.position
+      camera.lookAt targetPosition
+      cameraMoved = false
       forceUpdate = true
 
     if forceUpdate
@@ -517,7 +538,9 @@ create: ->
     createLocation,
     follow,
     stopFollowing,
-    satellite
+    satellite,
+    setCameraController,
+    setCameraTarget
   }
 
 circle: CIRCLE_IMAGE
@@ -562,7 +585,7 @@ observeMouse: (camera, target)->
 
     $domElement.css 'cursor', 'move'
 
-class Satellite
+Satellite: class Satellite
   constructor: ->
     @updated = true
     @moving = false
@@ -619,7 +642,24 @@ class Satellite
       @moving = moved
     result = @moving or @updated
     @updated = false
+
+    if @orbiting
+      orbitingUpdated = @orbiting.update(deltaT)
+      result or= orbitingUpdated
+      if result
+        # TODO move into orbiting
+        @matrix = llToRotationMatrix @orbiting.position.lng, @orbiting.position.lat
+
     result
+
+  toCartesian: (target) ->
+    if @orbiting
+      llToXyz @position.lng, @position.lat, SIZE + SIZE * @altitude, target
+      @matrix.multiplyVector3 target
+      orbitingPosition = @orbiting.toCartesian new THREE.Vector3
+      target.addSelf orbitingPosition
+    else
+      llToXyz @position.lng, @position.lat, SIZE + SIZE * @altitude, target
 
 shaders =
   earth:

@@ -5,10 +5,26 @@
 <script src="https://raw.github.com/mrdoob/three.js/r49/build/Three.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 <script src="../../build/globe.js"></script>
+<style>
+  #map {
+    float: right;
+  }
+  #controls {
+    float: right;
+  }
+  canvas {
+    clear: both;
+  }
+</style>
 </head>
 <body>
-  <div><img src="../../natural-earth.jpg" width="500"/>
-    <input type="range" id="altitude" min="0" max="10" step="0.1" value="4"/></div>
+  <div id="map"><img src="../../natural-earth.jpg" width="500"/></div>
+  <div id="controls">
+    <p>Altitude: <input type="range" id="altitude" min="-1" max="10" step="0.1" value="0"/></p>
+    <p>Distance: <input type="range" id="distance" min="-1" max="10" step="0.1" value="1"/></p>
+    <p>Lng: <input type="range" id="lng" min="-180" max="180" step="0.1" value="0"/></p>
+    <p>Lat: <input type="range" id="lat" min="-90" max="90" step="0.1" value="90"/></p>
+  </div>
   <script src="camera.js"></script>
 
 </body>
