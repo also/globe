@@ -41,7 +41,7 @@ init = ->
     controller.position.setPosition lng: this.value
 
   $img = $ 'img'
-  $img.on 'mousemove', (e) ->
-    cameraTarget.setPosition eToLl(e, this)
+  $img.on 'click', (e) ->
+    controller.target.setPosition eToLl(e, this)
 
 $ init
