@@ -501,7 +501,7 @@ observeMouse: (camera, target)->
 
   $domElement = $(target)
   $domElement.bind 'mousewheel', (e) ->
-    camera.setAltitudeTarget camera.altitudeTarget - e.originalEvent.wheelDeltaY * (0.005)
+    camera.setDistanceTarget camera.distanceTarget - e.originalEvent.wheelDeltaY * (0.005)
     e.preventDefault()
 
   mouseup = (e) ->
@@ -510,7 +510,7 @@ observeMouse: (camera, target)->
 
   mousemove = (e) ->
     mouse = x: -e.clientX, y: e.clientY
-    zoomDamp = (camera.altitude * SIZE + SIZE) / 1000
+    zoomDamp = (camera.distance * SIZE) / 1000
 
     camera.setPositionTarget
       lng: targetDown.lng + (mouse.x - mouseDown.x) * .25 * zoomDamp
@@ -545,8 +545,8 @@ Satellite: class Satellite
     @positionTarget =
       lng: 0
       lat: 0
-    @altitude = 4
-    @altitudeTarget = 4
+    @distance = 5
+    @distanceTarget = 5
 
   setPosition: ({lng, lat}) ->
     lat ?= @position.lat
@@ -567,12 +567,18 @@ Satellite: class Satellite
     lat = @positionTarget.lat + (lat ? 0)
     @setPositionTarget {lng, lat}
 
-  setAltitude: (@altitude) ->
-    @altitudeTarget = @altitude
+  setAltitude: (altitude) ->
+    @setDistance altitude + 1
+
+  setDistance: (@distance) ->
+    @distanceTarget = @distance
     @updated = true
     @moving = false
 
-  setAltitudeTarget: (@altitudeTarget) ->
+  setAltitudeTarget: (altitudeTarget) ->
+    @setDistanceTarget altitudeTarget + 1
+
+  setDistanceTarget: (@distanceTarget) ->
     @moving = true
 
   update: (deltaT) ->
@@ -591,11 +597,11 @@ Satellite: class Satellite
         moved = true
         @position.lat += (@positionTarget.lat - @position.lat) * rotateDistance
 
-      if Math.abs(@altitudeTarget - @altitude) < MIN_TARGET_DELTA
-        @altitude = @altitudeTarget
+      if Math.abs(@distanceTarget - @distance) < MIN_TARGET_DELTA
+        @distance = @distanceTarget
       else
         moved = true
-        @altitude += (@altitudeTarget - @altitude) * Math.min(1, DISTANCE_RATE * deltaT)
+        @distance += (@distanceTarget - @distance) * Math.min(1, DISTANCE_RATE * deltaT)
       @moving = moved
     result = @moving or @updated
     @updated = false
@@ -611,12 +617,12 @@ Satellite: class Satellite
 
   toCartesian: (target) ->
     if @orbiting
-      llToXyz @position.lng, @position.lat, SIZE + SIZE * @altitude, target
+      llToXyz @position.lng, @position.lat, SIZE * @distance, target
       @matrix.multiplyVector3 target
       orbitingPosition = @orbiting.toCartesian new THREE.Vector3
       target.addSelf orbitingPosition
     else
-      llToXyz @position.lng, @position.lat, SIZE + SIZE * @altitude, target
+      llToXyz @position.lng, @position.lat, SIZE * @distance, target
 
 SimpleCameraController: class SimpleCameraController
   constructor: (@context) ->
