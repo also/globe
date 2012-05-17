@@ -627,11 +627,12 @@ Satellite: class Satellite
 SimpleCameraController: class SimpleCameraController
   constructor: (@context) ->
     @positionCartesian = new THREE.Vector3
+    @up = new THREE.Vector3 0, 1, 0
 
   update: (deltaT) ->
     if @satellite.update deltaT
       @satellite.toCartesian @positionCartesian
-      @context.updateCamera @positionCartesian
+      @context.updateCamera @positionCartesian, @target, @up
 
 shaders =
   earth:
