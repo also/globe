@@ -494,6 +494,8 @@ create: ->
   }
 
 circle: CIRCLE_IMAGE
+llToXyz: llToXyz
+slerp: slerp
 observeMouse: (camera, target)->
   mouseDown = null
   targetDown = null
