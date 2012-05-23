@@ -1,4 +1,6 @@
 build
+examples/camera/camera.js
 examples/cities/cities.js
+examples/land/land.js
 examples/points/points.js
 examples/population/population.js
