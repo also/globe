@@ -129,9 +129,6 @@ create: ->
     height = h
     renderer.setSize width, height
     camera.aspect = width / height
-    canvasSizeUniform.value.x = width
-    canvasSizeUniform.value.y = height
-    canvasSizeUniform.needsUpdate = true
     camera.updateProjectionMatrix()
 
     event = new CustomEvent 'resize', detail: {width, height}, bubbles: false
@@ -193,7 +190,7 @@ create: ->
 
   createEarth = ->
     shader = shaders.earth
-    uniforms = THREE.UniformsUtils.clone(shader.uniforms)
+    uniforms = THREE.UniformsUtils.clone shader.uniforms
     uniforms.atmosphereColor.value = new THREE.Color atmosphereColor
     uniforms.texture.texture = earthTexture
     material = new THREE.ShaderMaterial(
@@ -309,7 +306,12 @@ create: ->
     vertexShader = shader.vertexShader
     if opts.sizeAttenuation ? true
       vertexShader = '#define USE_SIZEATTENUATION\n' + vertexShader
-      uniforms.canvasSize = canvasSizeUniform
+      uniforms.canvasSize = THREE.UniformsUtils.clone(canvasSize: canvasSizeUniform).canvasSize
+
+      renderer.domElement.addEventListener 'resize', ({detail: {width, height}}) ->
+        uniforms.canvasSize.value.x = width
+        uniforms.canvasSize.value.y = height
+        uniforms.canvasSize.needsUpdate = true
 
     fragmentShader = fragmentShaderTextures + shader.fragmentShader.replace('// TEXTURE SELECTION', fragmentShaderTextureSelection.join('\n else\n '))
 
