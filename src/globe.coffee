@@ -134,6 +134,9 @@ create: ->
     canvasSizeUniform.needsUpdate = true
     camera.updateProjectionMatrix()
 
+    event = new CustomEvent 'resize', detail: {width, height}, bubbles: false
+    renderer.domElement.dispatchEvent event
+
   initAnimation = ->
     previousTime = + new Date
     nextFrame()
