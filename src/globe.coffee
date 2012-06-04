@@ -536,7 +536,7 @@ observeMouse: (camera, target)->
 
     camera.setPositionTarget
       lng: targetDown.lng + (mouse.x - mouseDown.x) * .25 * zoomDamp
-      lat: targetDown.lat + (mouse.y - mouseDown.y) * .25 * zoomDamp
+      lat: Math.max -90, Math.min(89, targetDown.lat + (mouse.y - mouseDown.y) * .25 * zoomDamp)
 
   removeMouseMoveEventListeners = ->
     $domElement
@@ -571,8 +571,8 @@ Satellite: class Satellite
     @distanceTarget = 5
 
   setPosition: ({lng, lat}) ->
-    lat ?= @position.lat
     lng ?= @position.lng
+    lat ?= @position.lat
     @position = {lng, lat}
     @positionTarget = {lng, lat}
     @updated = true
