@@ -521,6 +521,11 @@ observeMouse: (camera, target)->
   targetDown = null
   rotationTargetDown = null
 
+  position = (e) ->
+    if e.originalEvent.touches?
+      e = e.originalEvent.touches[0]
+    x: -e.clientX, y: e.clientY
+
   $domElement = $(target)
   $domElement.bind 'mousewheel', (e) ->
     camera.setDistanceTarget camera.distanceTarget - e.originalEvent.wheelDeltaY * (0.005)
@@ -531,7 +536,7 @@ observeMouse: (camera, target)->
     $domElement.css 'cursor', ''
 
   mousemove = (e) ->
-    mouse = x: -e.clientX, y: e.clientY
+    mouse = position e
     zoomDamp = (camera.distance * SIZE) / 1000
 
     camera.setPositionTarget
@@ -540,19 +545,19 @@ observeMouse: (camera, target)->
 
   removeMouseMoveEventListeners = ->
     $domElement
-      .unbind('mousemove')
-      .unbind('mouseup', mouseup)
+      .unbind('mousemove touchmove')
+      .unbind('mouseup touchend', mouseup)
 
-  $domElement.bind 'mousedown', (e) ->
+  $domElement.bind 'mousedown touchstart', (e) ->
     e.preventDefault()
-    $domElement.bind 'mousemove', mousemove
+    $domElement.bind 'mousemove touchmove', mousemove
 
-    $domElement.bind 'mouseup', mouseup
+    $domElement.bind 'mouseup touchend', mouseup
 
     $domElement.bind 'mouseleave', (e) ->
       removeMouseMoveEventListeners()
 
-    mouseDown = x: -e.clientX, y: e.clientY
+    mouseDown = position e
     targetDown = lng: camera.positionTarget.lng, lat: camera.positionTarget.lat
 
     $domElement.css 'cursor', 'move'
