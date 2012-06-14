@@ -114,7 +114,7 @@ create: ->
       atmosphereColor = 0
 
     if opts.globe ? true
-      earthTexture = THREE.ImageUtils.loadTexture opts.globeTexture ? 'world.jpg', null, opts.onLoad
+      earthTexture = THREE.ImageUtils.loadTexture opts.globeTexture ? 'world.jpg', null, opts.onload
       scene.add createEarth()
 
     if opts.stars
