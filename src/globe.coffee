@@ -69,8 +69,6 @@ create: ->
   camera = null
   renderer = null
   scene = null
-  earthTexture = null
-  atmosphereColor = null
   width = height = null
   onupdate = null
   cameraPositionNormalized = new THREE.Vector3
@@ -90,8 +88,6 @@ create: ->
   init = (opts={}) ->
     width = opts.width ? 800
     height = opts.height ? 600
-    backgroundColor = opts.backgroundColor ? 0x000000
-    atmosphereColor = opts.atmosphereColor ? 0xffffff
     onupdate = opts.onupdate
 
     renderer = new THREE.WebGLRenderer antialias: true, preserveDrawingBuffer: opts.preserveDrawingBuffer
@@ -99,7 +95,7 @@ create: ->
     opts.container?.appendChild renderer.domElement
     @domElement = renderer.domElement
     renderer.autoClear = false
-    renderer.setClearColorHex backgroundColor, opts.backgroundOpacity ? 1
+    renderer.setClearColorHex opts.backgroundColor ? 0x000000, opts.backgroundOpacity ? 1
 
     camera = new THREE.PerspectiveCamera 30, width / height, 1, 10000
     setCameraController new SimpleCameraController this
@@ -109,16 +105,17 @@ create: ->
 
     scene = new THREE.Scene
     if opts.atmosphere ? true
-      scene.add createAtmosphere()
+      atmosphereColor = opts.atmosphereColor ? 0xffffff
+      scene.add globe.createAtmosphere {atmosphereColor}
     else
       atmosphereColor = 0
 
     if opts.globe ? true
       earthTexture = THREE.ImageUtils.loadTexture opts.globeTexture ? 'world.jpg', null, opts.onload
-      scene.add createEarth()
+      scene.add globe.createEarth texture: earthTexture, atmosphereColor: atmosphereColor
 
     if opts.stars
-      scene.add createStars()
+      scene.add globe.createStars()
 
     scene.add camera
 
@@ -187,66 +184,6 @@ create: ->
 
   updated = ->
     forceUpdate = true
-
-  createEarth = ->
-    shader = shaders.earth
-    uniforms = THREE.UniformsUtils.clone shader.uniforms
-    uniforms.atmosphereColor.value = new THREE.Color atmosphereColor
-    uniforms.texture.texture = earthTexture
-    material = new THREE.ShaderMaterial(
-      uniforms: uniforms
-      vertexShader: shader.vertexShader
-      fragmentShader: shader.fragmentShader
-    )
-
-    geometry = new THREE.SphereGeometry SIZE, 100, 50
-    mesh = new THREE.Mesh geometry, material
-
-    # https://github.com/mrdoob/three.js/issues/1123
-    mesh.rotation.y = Math.PI
-    mesh.updateMatrix()
-
-    mesh.matrixAutoUpdate = false
-    mesh
-
-  createAtmosphere = ->
-    shader = shaders.atmosphere
-    uniforms = THREE.UniformsUtils.clone(shader.uniforms)
-    uniforms.color.value = new THREE.Color atmosphereColor
-    material = new THREE.ShaderMaterial(
-      uniforms: uniforms
-      vertexShader: shader.vertexShader
-      fragmentShader: shader.fragmentShader
-    )
-    geometry = new THREE.SphereGeometry SIZE, 100, 50
-    mesh = new THREE.Mesh geometry, material
-    mesh.scale.set 1.4, 1.4, 1.4
-    mesh.flipSided = true
-    mesh.matrixAutoUpdate = false
-    mesh.updateMatrix()
-    mesh
-
-  createStars = ->
-    geometry = new THREE.Geometry
-    for i in [1..800]
-      v = srand(SIZE * 10 + Math.random() * SIZE * 5)
-      geometry.vertices.push v
-
-    texture = new THREE.Texture CIRCLE_IMAGE
-    texture.needsUpdate = true
-
-
-    material = new THREE.ParticleBasicMaterial
-      size: 12
-      map: texture
-      blending: THREE.AdditiveBlending
-      transparent : true
-
-    material.color.setHSV .65, .0, .5
-
-    ps = new THREE.ParticleSystem geometry, material
-    ps.updateMatrix()
-    ps
 
   createParticles = (opts) ->
     textures = opts.textures ? {default: opts.texture ? CIRCLE_IMAGE}
@@ -512,6 +449,65 @@ create: ->
     setCameraController,
     updateCamera
   }
+
+createEarth: (opts) ->
+  shader = shaders.earth
+  uniforms = THREE.UniformsUtils.clone shader.uniforms
+  uniforms.atmosphereColor.value = new THREE.Color opts.atmosphereColor
+  uniforms.texture.texture = opts.texture
+  material = new THREE.ShaderMaterial(
+    uniforms: uniforms
+    vertexShader: shader.vertexShader
+    fragmentShader: shader.fragmentShader
+  )
+
+  geometry = new THREE.SphereGeometry SIZE, 100, 50
+  mesh = new THREE.Mesh geometry, material
+
+  # https://github.com/mrdoob/three.js/issues/1123
+  mesh.rotation.y = Math.PI
+  mesh.updateMatrix()
+
+  mesh.matrixAutoUpdate = false
+  mesh
+
+createAtmosphere: (opts) ->
+  shader = shaders.atmosphere
+  uniforms = THREE.UniformsUtils.clone(shader.uniforms)
+  uniforms.color.value = new THREE.Color opts.atmosphereColor
+  material = new THREE.ShaderMaterial(
+    uniforms: uniforms
+    vertexShader: shader.vertexShader
+    fragmentShader: shader.fragmentShader
+  )
+  geometry = new THREE.SphereGeometry SIZE, 100, 50
+  mesh = new THREE.Mesh geometry, material
+  mesh.scale.set 1.4, 1.4, 1.4
+  mesh.flipSided = true
+  mesh.matrixAutoUpdate = false
+  mesh.updateMatrix()
+  mesh
+
+createStars: ->
+  geometry = new THREE.Geometry
+  for i in [1..800]
+    v = srand(SIZE * 10 + Math.random() * SIZE * 5)
+    geometry.vertices.push v
+
+  texture = new THREE.Texture CIRCLE_IMAGE
+  texture.needsUpdate = true
+
+  material = new THREE.ParticleBasicMaterial
+    size: 12
+    map: texture
+    blending: THREE.AdditiveBlending
+    transparent : true
+
+  material.color.setHSV .65, .0, .5
+
+  ps = new THREE.ParticleSystem geometry, material
+  ps.updateMatrix()
+  ps
 
 circle: CIRCLE_IMAGE
 llToXyz: llToXyz
