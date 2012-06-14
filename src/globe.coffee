@@ -229,7 +229,7 @@ create: ->
   createStars = ->
     geometry = new THREE.Geometry
     for i in [1..800]
-      v = new THREE.Vector3 srand(SIZE * 10 + Math.random() * SIZE * 5)
+      v = srand(SIZE * 10 + Math.random() * SIZE * 5)
       geometry.vertices.push v
 
     texture = new THREE.Texture CIRCLE_IMAGE
