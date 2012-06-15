@@ -111,8 +111,15 @@ create: ->
       atmosphereColor = 0
 
     if opts.globe ? true
-      earthTexture = THREE.ImageUtils.loadTexture opts.globeTexture ? 'world.jpg', null, opts.onload
-      scene.add globe.createEarth texture: earthTexture, atmosphereColor: atmosphereColor
+      texture = if opts.globeTexture instanceof THREE.Texture
+        opts.globeTexture
+        window.setTimeout ->
+          opts.onload?()
+        ,1
+      else
+        THREE.ImageUtils.loadTexture opts.globeTexture ? 'world.jpg', null, opts.onload
+
+      scene.add globe.createEarth {texture, atmosphereColor}
 
     if opts.stars
       scene.add globe.createStars()
