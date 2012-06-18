@@ -555,10 +555,14 @@ observeMouse: (camera, target, type='mouse') ->
     mouse = position e
     zoomDamp = (camera.distance * SIZE) / 1000
 
-    camera.setPositionTarget
-      lng: targetDown.lng + (mouse.x - mouseDown.x) * .25 * zoomDamp
-      lat: Math.max -90, Math.min(89, targetDown.lat + (mouse.y - mouseDown.y) * .25 * zoomDamp)
+    if !e.originalEvent.touches? or e.originalEvent.touches.length == 1
+      camera.setPositionTarget
+        lng: targetDown.lng + (mouse.x - mouseDown.x) * .25 * zoomDamp
+        lat: Math.max -90, Math.min(89, targetDown.lat + (mouse.y - mouseDown.y) * .25 * zoomDamp)
 
+    scale = e.originalEvent.scale
+    if scale?
+      camera.setDistanceTarget Math.min 10, Math.max(1.3, camera.distanceTarget + ((scale - 1) / -10))
 
   $domElement.bind events.start, (e) ->
     e.preventDefault()
