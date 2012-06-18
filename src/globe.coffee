@@ -584,7 +584,6 @@ Satellite: class Satellite
     @position = {lng, lat}
     @positionTarget = {lng, lat}
     @updated = true
-    @moving = false
 
   setPositionTarget: ({lng, lat}) ->
     lng ?= @positionTarget.lng
@@ -603,7 +602,6 @@ Satellite: class Satellite
   setDistance: (@distance) ->
     @distanceTarget = @distance
     @updated = true
-    @moving = false
 
   setAltitudeTarget: (altitudeTarget) ->
     @setDistanceTarget altitudeTarget + 1
