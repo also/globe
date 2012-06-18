@@ -519,10 +519,21 @@ createStars: ->
 circle: CIRCLE_IMAGE
 llToXyz: llToXyz
 slerp: slerp
-observeMouse: (camera, target)->
+observeMouse: (camera, target, type='mouse') ->
+  eventTypes =
+    mouse:
+      start: 'mousedown'
+      move:  'mousemove'
+      end:   'mouseup mouseleave'
+    touch:
+      start: 'touchstart'
+      move:  'touchmove'
+      end:   'touchend'
+
+  events = eventTypes[type]
+
   mouseDown = null
   targetDown = null
-  rotationTargetDown = null
 
   position = (e) ->
     if e.originalEvent.touches?
@@ -535,7 +546,9 @@ observeMouse: (camera, target)->
     e.preventDefault()
 
   mouseup = (e) ->
-    removeMouseMoveEventListeners()
+    $domElement
+      .unbind(events.move, mousemove)
+      .unbind(events.end, mouseup)
     $domElement.css 'cursor', ''
 
   mousemove = (e) ->
@@ -546,19 +559,12 @@ observeMouse: (camera, target)->
       lng: targetDown.lng + (mouse.x - mouseDown.x) * .25 * zoomDamp
       lat: Math.max -90, Math.min(89, targetDown.lat + (mouse.y - mouseDown.y) * .25 * zoomDamp)
 
-  removeMouseMoveEventListeners = ->
-    $domElement
-      .unbind('mousemove touchmove')
-      .unbind('mouseup touchend', mouseup)
 
-  $domElement.bind 'mousedown touchstart', (e) ->
+  $domElement.bind events.start, (e) ->
     e.preventDefault()
-    $domElement.bind 'mousemove touchmove', mousemove
+    $domElement.bind events.move, mousemove
 
-    $domElement.bind 'mouseup touchend', mouseup
-
-    $domElement.bind 'mouseleave', (e) ->
-      removeMouseMoveEventListeners()
+    $domElement.bind events.end, mouseup
 
     mouseDown = position e
     targetDown = lng: camera.positionTarget.lng, lat: camera.positionTarget.lat
