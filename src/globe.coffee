@@ -519,7 +519,7 @@ createStars: ->
 circle: CIRCLE_IMAGE
 llToXyz: llToXyz
 slerp: slerp
-observeMouse: (camera, target, type='mouse') ->
+observeMouse: (camera, target, {type, distanceRange}={}) ->
   eventTypes =
     mouse:
       start: 'mousedown'
@@ -529,6 +529,9 @@ observeMouse: (camera, target, type='mouse') ->
       start: 'touchstart'
       move:  'touchmove'
       end:   'touchend'
+
+  type ?= 'mouse'
+  distanceRange ?= [1.5, 10]
 
   events = eventTypes[type]
 
@@ -542,7 +545,8 @@ observeMouse: (camera, target, type='mouse') ->
 
   $domElement = $(target)
   $domElement.bind 'mousewheel', (e) ->
-    camera.setDistanceTarget camera.distanceTarget - e.originalEvent.wheelDeltaY * (0.005)
+    newDistance = camera.distanceTarget - e.originalEvent.wheelDeltaY * (0.005)
+    camera.setDistanceTarget Math.min(Math.max(distanceRange[0], newDistance), distanceRange[1])
     e.preventDefault()
 
   mouseup = (e) ->
