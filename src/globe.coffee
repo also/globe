@@ -345,6 +345,7 @@ create: ->
     opts.defaultDimension ?= 0.75
     defaultPointGeometry = new THREE.CubeGeometry opts.defaultDimension, opts.defaultDimension, 1
     defaultPointGeometry.vertices.forEach (v) -> v.z += 0.5
+    opts.colorFunction ?= POPULATION_COLOR_FUNCTION
 
     geometry = new THREE.Geometry
     # making the geometry dynamic is necessary to have three.js update custom
@@ -426,7 +427,7 @@ create: ->
       @setSizeTargetMix 0
 
     add = ->
-      vertexShader = shaders.point.vertexShader
+      vertexShader = opts.colorFunction + shaders.point.vertexShader
       if opts.customColor
         vertexShader = "#define USE_CUSTOM_COLOR;\n" + vertexShader
       if opts.sizeTarget
@@ -738,25 +739,6 @@ shaders =
         attribute vec3 customColor;
       #endif
 
-      // found, randomly, at https://www.h3dapi.org:8090/MedX3D/trunk/MedX3D/src/shaders/StyleFunctions.glsl
-      vec3 HSVtoRGB(float h, float s, float v) {
-        if (s == 0.0) return vec3(v);
-
-        h /= 60.0;
-        int i = int(floor(h));
-        float f = h - float(i);
-        float p = v * (1.0 - s);
-        float q = v * (1.0 - s * f);
-        float t = v * (1.0 - s * (1.0 - f));
-
-        if (i == 0) return vec3(v,t,p);
-        if (i == 1) return vec3(q,v,p);
-        if (i == 2) return vec3(p,v,t);
-        if (i == 3) return vec3(p,q,v);
-        if (i == 4) return vec3(t,p,v);
-                    return vec3(v,p,q);
-      }
-
       void main() {
         float mixedSize = size;
         #ifdef USE_SIZE_TARGET
@@ -789,7 +771,7 @@ shaders =
           f_color = vec4(customColor, 1.0);
         #endif
         #ifndef USE_CUSTOM_COLOR
-          f_color = vec4(HSVtoRGB((0.6 - mixedSize * 0.5) * 360.0, 1.0, 1.0), 1.0);
+          f_color = color(mixedSize);
         #endif
       }
     """
@@ -846,3 +828,28 @@ shaders =
         }
       }
     """
+
+POPULATION_COLOR_FUNCTION = '''
+  // found, randomly, at https://www.h3dapi.org:8090/MedX3D/trunk/MedX3D/src/shaders/StyleFunctions.glsl
+  vec3 HSVtoRGB(float h, float s, float v) {
+    if (s == 0.0) return vec3(v);
+
+    h /= 60.0;
+    int i = int(floor(h));
+    float f = h - float(i);
+    float p = v * (1.0 - s);
+    float q = v * (1.0 - s * f);
+    float t = v * (1.0 - s * (1.0 - f));
+
+    if (i == 0) return vec3(v,t,p);
+    if (i == 1) return vec3(q,v,p);
+    if (i == 2) return vec3(p,v,t);
+    if (i == 3) return vec3(p,q,v);
+    if (i == 4) return vec3(t,p,v);
+                return vec3(v,p,q);
+  }
+
+  vec4 color(float size) {
+    return vec4(HSVtoRGB((0.6 - size * 0.5) * 360.0, 1.0, 1.0), 1.0);
+  }
+'''
