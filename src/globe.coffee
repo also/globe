@@ -383,23 +383,21 @@ create: ->
 
       pos = llToXyz(lng, lat)
 
-      attributes.customPosition.value[i] = pos for i in [vertexOffset...vertexOffset + vertexCount]
-      attributes.customPosition.needsUpdate = true
+      set = (name, value) ->
+        attribute = attributes[name]
+        attribute.value[i] = value for i in [vertexOffset...vertexOffset + vertexCount]
+        attribute.needsUpdate = true
 
-      setSize = (@size) ->
-        attributes.size.value[i] = size for i in [vertexOffset...vertexOffset + vertexCount]
-        attributes.size.needsUpdate = true
+      set 'customPosition', pos
 
-      setSizeTarget = (@sizeTarget) ->
-        attributes.sizeTarget.value[i] = sizeTarget for i in [vertexOffset...vertexOffset + vertexCount]
-        attributes.sizeTarget.needsUpdate = true
+      setSize = (@size) -> set 'size', @size
+
+      setSizeTarget = (@sizeTarget) -> set 'sizeTarget', @sizeTarget
 
       mix = (sizeTargetMix) ->
         @setSize @size + (@sizeTarget - @size) * sizeTargetMix
 
-      setColor = (color) ->
-        attributes.customColor.value[i] = color for i in [vertexOffset...vertexOffset + vertexCount]
-        attributes.customColor.needsUpdate = true
+      setColor = (color) -> set 'color', color
 
       p = {setSize, setSizeTarget, mix, setColor}
 
