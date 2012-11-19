@@ -433,12 +433,14 @@ create: ->
       if opts.sizeTarget
         vertexShader = "#define USE_SIZE_TARGET;\n" + vertexShader
 
-      scene.add new THREE.Mesh geometry, new THREE.ShaderMaterial(
+      mesh = new THREE.Mesh geometry, new THREE.ShaderMaterial(
         uniforms: uniforms
         attributes: attributes
         vertexShader: vertexShader
         fragmentShader: shaders.point.fragmentShader
       )
+      mesh.frustumCulled = false
+      scene.add mesh
 
     {points, createBar, add, setSizes, setSizeTargets, setSizeTargetMix, mix}
 
