@@ -32,13 +32,13 @@ init = ->
   earth.initAnimation()
 
   $('#altitude').on 'change', (e) ->
-    controller.target.setAltitude this.value
+    controller.target.setAltitude parseFloat this.value
   $('#distance').on 'change', (e) ->
-    controller.position.setAltitude this.value
+    controller.position.setAltitude parseFloat this.value
   $('#lat').on 'change', ->
-    controller.position.setPosition lat: this.value
+    controller.position.setPosition lat: parseFloat this.value
   $('#lng').on 'change', ->
-    controller.position.setPosition lng: this.value
+    controller.position.setPosition lng: parseFloat this.value
 
   $img = $ 'img'
   $img.on 'click', (e) ->
